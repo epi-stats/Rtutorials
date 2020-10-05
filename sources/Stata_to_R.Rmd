@@ -1,0 +1,1061 @@
+---
+title: "Translating Stata to R"
+output:
+  bookdown::html_document2: 
+    number_sections: false 
+    toc: true
+    toc_float: true
+    smart: false
+---
+
+
+```{r, include=FALSE}
+tutorial::go_interactive(greedy=FALSE,  height = 290)
+```
+
+# Index {#index}
+
+This manual explains the R syntax for people familiar with Stata.<br>
+NOTE: the examples only illustrate R syntax without considering specifically how the data should be analysed to take into account its particular properties.<br><br>
+
+[about](#about) \ \  [ameans](#ameans) \ \  [anova](#anova) \ \  [append](#append) <br>
+[bootstrap](#bootstrap) \ \  [browse](#browse) \ \  [bsample](#bsample) \ \  [by](#by) \ \  [bysort](#by) <br>
+[cd](#cd) \ \  [centile](#centile) \ \  [clear](#clear) \ \  [clogit](#clogit) \ \  [cls](#clear) \ \  [codebook](#summarize) \ \  [collapse](#collapse) \ \  [correlate](#correlate) \ \  [count](#count) <br>
+[describe](#describe) \ \ [dotplot](#dotplot) \ \  [drop](#drop) <br>
+[egen](#egen) \ \  [estimates_store](#lrtest) <br>
+[findit](#help) <br>
+[generate](#generate) \ \  [graph_bar](#bar) \ \  [graph_box](#box) \ \  [graph_matrix](#matrix) <br>
+[help](#help) \ \  [histogram](#hist)<br>
+[if](#if) \ \  [in](#in) <br>
+[kappa](#kappa) \ \  [keep](#drop) \ \  [ktau](#correlate)<br> 
+[levelsof](#levelsof) \ \  [list](#list) \ \  [logit](#logit) \ \  [logistic](#logit) \ \  [lowess](#lowess) \ \  [lrtest](#lrtest) <br>
+[mean](#mean) \ \  [merge](#merge) \ \  [mhodds](#mhodds) \ \  [mvdecode](#mvdecode)\ \  [mvenecode](#mvdecode) <br>
+[predict](#predict) <br>
+[qnorm](#qnorm) <br>
+[ranksum](#ttest) \ \  [recode](#recode) \ \  [regress](#regress) \ \  [rename](#rename) \ \  [rvfplot](#regress) \ \  [replace](#replace) \ \  [reshape](#reshape) <br>
+[sample](#sample) \ \  [save](#save) \ \  [scatter](#scatter) \ \  [signrank](#ttest) \ \  [sort](#sort) \ \  [spearman](#correlate) \ \  [summarize](#summarize) <br> 
+[tab1](#tabulate) \ \  [table](#by) \ \  [tabstat](#collapse) \ \  [tabulate](#tabulate) \ \ [ttest](#ttest) \ \  [twoway_lfit](#lowess)<br> 
+ [xi](#xi) \ \ \  [xtile](#xtile)<br><br> 
+
+
+
+# Example dataset <tt>airquality</tt>
+
+Data represent daily air quality measurements in New York, May to September 1973.
+The variables <tt>Ozone</tt> and <tt>Solar.R</tt> have several missing values.<br>  
+NOTE: the examples only illustrate R syntax without considering specifically how the data should be analysed to take into account its particular properties.<br><br>  
+
+```{r tut=F, echo=F}
+knitr::kable(data.frame(No = 1:6, 
+        Var =  colnames(airquality), 
+        Type=rep("number",6),
+        Description =c(
+          "Ozone (ppb)",
+          "Solar radiation (lang)",
+          "Wind speed (mph)",
+          "Temperature (°F)",
+          "Month (1--12)",
+          "Day of month (1--31)"
+    )), booktabs = TRUE,
+  caption = 'Example dataset airquality'
+)
+
+```
+
+<br><br>Return to [index](#index)<br>
+
+
+# Example dataset <tt>infert</tt>
+Matched case-control study (ratio 1:2) on infertility after spontaneous and induced abortion.
+One case with two prior spontaneous abortions and two prior induced abortions is omitted.
+The first variable <tt>education</tt> is a categorical variable - called a factor in R.<br>  
+NOTE: the examples only illustrate R syntax without considering specifically how the data should be analysed to take into account its particular properties.<br>   
+```{r tut=F, echo=F}
+knitr::kable(data.frame(No = 1:8, Var = 
+        colnames(infert), 
+        Type=c("category",rep("number", 3),"binary",rep("number", 3)),
+        Description =c(
+          "Years of eduction 0:<6; 1:6-11; 2:12+",
+          "Age (years)",
+          "Parity",
+          "Numebr of prior induced abortions",
+          "Case (1) or control (0)",
+          "Numebr of prior spontaneous abortions",
+          "Matching ID",
+          "Pooled matching ID"
+          )), booktabs = TRUE,
+  caption = 'Example dataset infert'
+)
+```
+
+<br>Return to [index](#index)<br>
+
+
+# about {#about}
+
+The equivalent function in R is <tt>sessionInfo()</tt><br>   
+<br>Return to [index](#index)<br>
+
+# ameans {#ameans}
+
+The basic function for the arithmetic mean is <tt>mean</tt>. 
+Please note that this function will return NA if any value is missing.
+To ignore missing values add the argument <tt>na.rm = TRUE</tt>
+R has no inbuild function for calculation the geometric mean.
+However, it is easy to define a function.
+Keep in mind: The geometric mean is 0 if any of the values is 0.
+In case of 0's a constant is often added to each value (usually 1).<br>
+The mean for all variables is easily obtained with <tt>[summary](#summarize)</tt>.<br><br>
+
+```{r tut=TRUE}
+# STATA ameans Solar.R
+# arithmetic mean
+mean(airquality$Solar.R)
+# NOTE: mean will return NA if any value is missing
+#       Argument 'na.rm=T' ignores missing values 
+mean(airquality$Solar.R, na.rm=T)
+# geometric mean (no missing)
+geomean <- function(x) exp(sum(log(x))/length(x))
+geomean(airquality$Temp)
+# STATA ameans Temp, add(1)
+geoadd1 <- function(x) exp(sum(log(x+1))/length(x))
+geoadd1(airquality$Temp)
+
+```
+<br>Return to [index](#index)<br>
+
+# anova {#anova}
+
+R interprets ANOVA as a special case of linear regression.
+The function which shows the Analysis of Variance table is <tt>anova</tt> 
+which is called on a regression object.<br><br> 
+
+```{r tut=TRUE}
+# Binary predictor
+# STATA anova age case  
+anova(lm(age ~ case, data=infert))
+# Categorical predictor - categorical (factor) variable in R
+# STATA xi: anova age i.education 
+anova(lm(age ~ education, data=infert))
+# Categorical predictor - numerical variable in R
+# STATA xi: anova age i.induced 
+anova(lm(age ~ factor(induced), data=infert))
+
+```
+<br>Return to [index](#index)<br>
+
+# append {#append}
+
+To append two datasets, R has the function <tt>rbind</tt>  (for 'row bind').
+Note: Both datasets must have the same number of variables with identical variable names.
+However, the order of variables may be different.<br><br> 
+
+```{r tut=TRUE}
+# Make a copy of dataset infert
+inf.copy <- infert
+# Append both datasets 
+# STATA append using ...  
+new.data <- rbind(infert, inf.copy)
+nrow(infert)
+nrow(new.data)
+
+```
+<br>Return to [index](#index)<br>
+
+# bootstrap {#bootstrap}
+
+A bootstrap algorithm is implemented in the package <tt>boot</tt>.
+See [centile](#centile) for an example how to estimate confidence intervals for a quantile.<br><br>
+
+```{r tut=TRUE}
+# 95% CI of the mean via bootstrap
+# STATA bootstrap r(mean), reps(1000): summarize Temp
+library(boot)
+mean.boot <- boot(data = airquality$Temp, statistic = function(x, i) mean(x[i]), R = 1000)
+mean.boot 
+boot.ci(mean.boot)
+
+```
+<br>Return to [index](#index)<br>
+
+# browse {#browse}
+
+In R: <tt>View</tt>.
+
+<br>
+<tt>
+View(infert)
+</tt>
+<br>
+<br>Return to [index](#index)<br>
+
+# bsample {#bsample}
+
+For Stata's (bootstrap) sample with replacement use  <tt>sample</tt> with argument <tt>replace = TRUE</tt>. <br><br> 
+
+```{r tut=TRUE}
+# Sampling the numbers from 1 to 20 with replacement
+sample(1:20, replace = T)
+# ... sorted:
+sort( sample(1:20, replace = T))
+# STATA bsample Temp
+sample(airquality$Temp, replace = T)
+
+```
+<br>Return to [index](#index)<br>
+
+# by bysort table {#by}
+
+R does not require the dataset to be sorted. Therefore, bysort is not needed in R.
+The syntax of R's equivalent function is <tt>by(values, bygroups, function)</tt>.
+R's <tt>by</tt> is also a useful alternative to Stata's <tt>table</tt>.<br><br> 
+
+```{r tut=TRUE}
+# STATA by Month: mean Solar.R
+by(airquality$Solar.R, airquality$Month, mean)
+
+# NOTE: mean will return NA if any value is missing
+#       Argument 'na.rm=T' ignores missing values 
+by(airquality$Solar.R, airquality$Month, mean, na.rm=T)
+
+# STATA table Month,  c(min Solar.R mean mpg median Solar.R max Solar.R): mean Solar.R
+by(airquality$Solar.R, airquality$Month, summary)
+
+```
+<br>Return to [index](#index)<br>
+
+# cd {#cd}
+
+R's function to change the directory is <tt>setwd</tt> (for 'set working directory').
+Note: R understands only forward slash! If the path contains back slashes (typically for Windows) you have to convert them to forward slashes. <br>
+Examples:<br><br>
+<tt>
+setwd("C:/Users/KM/Documents/R/")
+</tt>
+
+<br><br>Return to [index](#index)<br>
+
+# centile {#centile}
+
+Percentiles of a single variable are provided by <tt>quantile</tt>.
+Please note that this function will return NA if any value is missing.
+To ignore missing values add the argument <tt>na.rm = TRUE</tt>.
+The median, 1st quantile and 3rd quantile  for all variables is easily obtained with <tt>[summary](#summarize)</tt>.
+The confidence interval of the pseudo median can be obtained with <tt>wilcox.test</tt>.
+For confidence interval of other percentiles [bootstrap](#bootstrap) resampling is recommended.<br><br>
+
+```{r tut=TRUE}
+# STATA centile
+summary(airquality)
+# obtain 95%CI of the median
+# STATA centile Temp
+wilcox.test(airquality$Temp, conf.int = T)
+# STATA centile Ozone, centile(10, 50, 90) 
+quantile(airquality$Ozone, probs=c(0.1, 0.5, 0.9), na.rm=T)
+# 95% CI of the 1st quantile via bootstrap
+library(boot)
+q1.boot <- boot(data = airquality$Temp, statistic = function(x, i) quantile(x[i], probs=.25), R = 1000)
+q1.boot 
+boot.ci(q1.boot)
+
+```
+<br>Return to [index](#index)<br>
+
+
+
+# clear cls {#clear}
+
+To remove a certain dataset  (or any R object) from memory use <tt>rm(mydata)</tt>.
+To remove all objects use <tt>rm(list=ls())</tt>.
+To clear the text in the console press [CTRL] + [L].
+
+<br><br>Return to [index](#index)<br>
+
+
+# clogit {#clogit}
+
+Package <tt>survival</tt> provides an equivalent function for conditional logistic regression.
+The model formula is of the form <tt>case.status ~ exposure + strata(matched.set)</tt>. 
+<br><br>
+
+```{r tut=TRUE}
+# STATA clogit case spontaneous induced, group(stratum)
+library(survival)
+clog <- clogit(case ~ spontaneous + induced + strata(stratum), data=infert)
+summary(clog)
+
+```
+<br>Return to [index](#index)<br>
+
+
+# codebook summarize {#summarize}
+
+In R <tt>summary</tt> provides many information on all or a few variables.
+For percentiles see [centile](#centile). <br><br>
+
+```{r tut=TRUE}
+# STATA summarize
+summary(airquality)
+
+# Number of unique values of Day
+# STATA codebook Day
+sort(unique(airquality$Day))
+length(unique(airquality$Day))
+
+```
+<br>Return to [index](#index)<br>
+
+
+# collapse tabstat {#collapse}
+
+Package <tt>dplyr</tt> provides several functions to generate summary statistics for numeric variables.<br><br> 
+
+```{r tut=TRUE}
+# STATA tabstat Temp Ozone, by(Month) stat(mean median n)
+library(dplyr)
+airquality %>%
+  group_by(Month) %>%
+  summarize(mean.Te = mean(Temp, na.rm = TRUE),
+            median.Te = median(Temp, na.rm = TRUE),
+            mean.Oz = mean(Ozone, na.rm = TRUE),
+            median.Oz = mean(Ozone, na.rm = TRUE),
+            n =n())
+```
+<br>Return to [index](#index)<br>
+
+
+# correlate ktau spearman {#correlate}
+
+Use <tt>cor</tt> in R.<br><br>
+
+```{r tut=TRUE}
+# STATA correlate _all
+cor(airquality,  use = "pairwise.complete.obs")
+
+# STATA spearman _all
+cor(airquality,  use = "pairwise.complete.obs", method = "spearman")
+
+# STATA ktau _all
+cor(airquality,  use = "pairwise.complete.obs", method = "kendall")
+
+```
+<br>Return to [index](#index)<br>
+
+
+# count {#count}
+
+The number of records or the number fullfilling a certain conditions can be 
+determined with <tt>nrow</tt>.<br><br> 
+
+```{r tut=TRUE}
+# STATA count
+nrow(airquality)
+# STATA count if month < 9
+nrow(airquality[airquality$Month < 8, ])
+#with subset
+nrow(subset(airquality, Month < 8))
+#with package dplyr
+library(dplyr)
+filter(airquality, Month < 8) %>% nrow()
+
+```
+<br>Return to [index](#index)<br>
+
+
+# describe {#describe}
+
+<tt>str</tt> (for 'structure') provides a basic description of a dataset.<br><br>
+
+```{r tut=TRUE}
+# STATA describe
+str(airquality)
+
+
+```
+<br>Return to [index](#index)<br>
+
+
+# dotplot {#dotplot}
+
+<tt>dotchart</tt> provides a basic desription of a dataset.<br><br>
+
+```{r tut=TRUE}
+# STATA Temp, over(Month)
+dotchart(airquality$Temp, group=airquality$Month)
+
+
+```
+
+<br><br>Return to [index](#index)<br>
+
+# drop keep {#drop}
+
+The easiest way is to use a conditional index in square brackets to keep some variables.
+For drop use the function <tt>subset</tt>.
+
+```{r tut=TRUE}
+# STATA keep Month Day
+keep.data <- airquality[, c("Month", "Day")]
+head(keep.data)
+# STATA drop Month Day
+drop.data <- subset(airquality, select = -c(Month, Day))
+head(drop.data)
+
+
+```
+
+<br><br>Return to [index](#index)<br>
+
+# egen {#egen}
+
+Stata's <tt>egen</tt> command is extremely felxible and powerful. 
+Some typical examples are provided below.<br> 
+<!-- Example with egen by group:<br> -->
+<!-- <tt> -->
+<!-- &#35; STATA bysort case: egen  meanage = mean(age)<br>  -->
+<!-- library(dplyr) <br>  -->
+<!-- infert$meanage <- infert %>% <br>  -->
+<!--         group_by(case) %>%<br>  -->
+<!--         mutate(meanage = mean(age, na.rm=T)) %>%<br>  -->
+<!--         pull()<br>  -->
+<!-- head(infert)<br>  -->
+<!-- </tt> -->
+<!-- <br><br>  -->
+
+```{r tut=TRUE}
+# STATA egen rankage = rank(age)
+infert$rankage <- rank(infert$age)
+# STATA egen Nabort = rowtotal(spontaneous induced)
+infert$Nabort <- rowSums(infert[, c("spontaneous","induced")], na.rm = T)
+# STATA egen excluded = rowmiss(_all)
+airquality$excluded <- rowSums(is.na(airquality))
+table(airquality$excluded)
+
+#STATA bysort case: egen  meanage = mean(age)<br> 
+library(dplyr) 
+airquality <- airquality %>%  
+        group_by(Month) %>% 
+        mutate(mTemp = mean(Temp, na.rm=T)) 
+table(airquality$mTemp)
+
+
+```
+<br>Return to [index](#index)<br>
+
+# estimates store lrtest {#lrtest}
+
+Results from statistical models can be stroired by simply assign them to a new R object
+<tt>mymodel <- lm(a ~ b, data = c)</tt>. Comparing 2 models with the likelihood ratio test 
+use  <tt>anova</tt>.<br><br> 
+
+```{r tut=TRUE}
+# STATA regress Ozone Wind Temp
+#       estimates store fullmod
+#       regress Ozone
+#       estimates store nullmod
+#       lrtest fullmod nullmod
+fullmod <- lm(Ozone ~ Wind + Temp, data=airquality)
+nullmod <- lm(Ozone ~ 1, data=airquality)
+anova(fullmod, nullmod)
+
+```
+<br>Return to [index](#index)<br>
+
+
+# generate {#generate}
+
+A new variable in R is simply generated by assigning new values to <tt>mydata$newvarname</tt><br><br>
+
+```{r tut=TRUE}
+# STATA genrate Celsius = (Temp - 32) * 5/9
+airquality$Celsius <- (airquality$Temp - 32) * 5/9
+summary(airquality$Celsius)
+
+```
+<br>Return to [index](#index)<br>
+
+# graph bar {#bar} 
+R's <tt>barplot</tt> function can be used with a numbers or a matrix.
+To generate the latter one <tt>prop.table</tt> may be useful.
+<br><br>
+
+
+```{r tut=TRUE}
+# STATA graph bar (mean) Ozone, over(Month)
+Oz.mean <- by(airquality$Ozone, airquality$Month, mean, na.rm = T)
+barplot(Oz.mean)
+
+# STATA's user written command catplot
+barplot(prop.table(table(infert$parity, infert$education), margin=2))
+
+```
+<br>Return to [index](#index)<br>
+
+# graph box {#box} 
+In R: <tt>boxplot</tt>.
+<br><br>
+
+```{r tut=TRUE}
+# STATA graph box Ozone, over(Month)
+boxplot(Ozone ~ Month, data=airquality)
+
+```
+<br>Return to [index](#index)<br>
+
+# graph matrix {#matrix} 
+<tt>plot(x)</tt> is a generic function. If <tt>x</tt> is a dataset, R will produce a scatterplot matrix. <tt>pairs</tt> is an alternative function which offers more flexibility.
+<br><br>
+Examples:<br><br>
+<tt>
+plot(airquality)<br>
+pairs(airquality, upper.panel = NULL, col=airquality$Month)
+</tt>
+
+<br><br>>Return to [index](#index)<br>
+
+# help findit {#help}
+
+The basic function to access the help documentation is simply a <tt>?</tt> followed by the function.
+A search in the documentation can be done with <tt>??</tt> or <tt>help.search</tt><br>
+Examples:<br><br>
+<tt>
+?airquality<br>
+??lm<br>
+help.search("linear models")
+</tt>
+
+<br><br>Return to [index](#index)<br>
+
+
+# histogram {#hist}
+
+In R: <tt>hist</tt>.
+<br><br>
+
+```{r tut=TRUE}
+# STATA hist Ozone, start(0) width(10)
+hist(airquality$Ozone, breaks=seq(0,170,10))
+
+```
+<br>Return to [index](#index)<br>
+
+
+# if {#if} 
+We refer here to Stata's <tt>command <b>if</b> expression</tt>. Not to the programming command.
+<br><br>
+
+```{r tut=TRUE}
+# STATA summarize if Month == 6
+summary(airquality[airquality$Ozone == 6, ])
+# STATA summarize Wind if Month == 6
+summary(airquality$Wind[airquality$Ozone == 6])
+# STATA summarize if Ozone == . 
+summary(airquality[is.na(airquality$Ozone), ])
+# STATA summarize if Ozone <= 30
+# in R better %in% instead of == because of NA
+summary(airquality[airquality$Ozone %in% 0:30, ])
+
+
+```
+
+<br><br>Return to [index](#index)<br>
+
+
+# in {#in} 
+In R usually done with square brackets.
+<br><br>
+
+```{r tut=TRUE}
+# STATA summarize in 1/10 Month == 6
+summary(airquality[1:10, ])
+
+
+```
+
+<br><br>Return to [index](#index)<br>
+
+
+# kappa {#kappa} 
+The basic R statistic package has no fucntion to calculate the Kappa statistic.
+The packages <tt>psych</tt> and  <tt>irr</tt> provide functions to calculate Kappa
+and various other types of rater agreement. 
+Note: the interpretation of Kappa is not as straight forward as widely assumed. See
+https://en.wikipedia.org/wiki/Cohen%27s_kappa#Limitations
+<br><br>
+
+<br><br>Return to [index](#index)<br>
+
+
+
+# levelsof {#levelsof}
+
+In R simply: <tt>levels</tt>.
+<br><br>
+
+```{r tut=TRUE}
+# STATA levelsof education  
+levels(infert$education)
+
+```
+<br>Return to [index](#index)<br>
+
+# list {#list}
+
+To print record numbers 4 to 6 use <tt>mydata[4:6, ]</tt>.
+To print records which fulfill a certain condition use <tt>mydata[mycondition, ]</tt>.
+<br><br>
+
+```{r tut=TRUE}
+# STATA list in 4/6
+airquality[4:6, ]
+# STATA list of Ozone == 0
+airquality[airquality$Solar.R < 10, ]
+# to get rid of missing:
+airquality[airquality$Solar.R  %in% 0:10, ]
+
+```
+<br>Return to [index](#index)<br>
+
+# logistic logit {#logit}
+
+In R, the logistic regression is considered a special case of a broader group of statistical 
+models known as generelaized linear models.
+The function to fit those models is <tt>glm</tt> (for 'generalized linear model').
+<br><br>
+
+```{r tut=TRUE}
+# generate binary variable abort = TRUE if induced > 0 or spontaneous > 0   
+# STATA generate abort = induced > 0 | spontaneous > 0  
+infert$abort <- infert$induced > 0 | infert$spontaneous > 0
+# crosstab 
+# STATA tab abort case
+table(infert$abort, infert$case)
+# STATA logit case abort, OR 
+model.1 <- glm(case ~ abort, data=infert, family="binomial") 
+summary(model.1)
+# Get odds ratio
+exp(coef(model.1))
+# Get confidence intervals
+exp(confint(model.1))
+
+```
+<br>Return to [index](#index)<br>
+
+# lowess lfit {#lowess}
+
+To generate a scatter plot with a smoothing or regression line you first have to generate the
+plot. Afterwards you can add the lines. Note on lowess smoother: if you have missing data in
+one of the variables you should first remove those observations (or use the alternative
+<tt>loess</tt> which is slightly more complicated to handle). 
+<br><br>
+
+```{r tut=TRUE}
+# STATA lowess Wind Temp
+plot(airquality$Wind, airquality$Temp)
+lines(lowess(airquality$Wind, airquality$Temp))
+
+
+# STATA graph twoway (lfit Wind Ozone) (scatter Wind Ozone )
+plot(airquality$Wind, airquality$Temp)
+abline(lm(Temp ~ Wind, data = airquality))
+
+
+```
+<br>Return to [index](#index)<br>
+
+
+# mean {#mean}
+
+Stata's mean calculates the mean together with standard error and confidence intervals.
+In R, confidence intervals can be estimated with a one sample t-test
+and the (constant only) linear regression returns the standard error.
+For geometric and harmonic means see [ameans](#ameans)<br><br>
+
+```{r tut=TRUE}
+# STATA mean Temp
+# 
+# 1 sample t.test for mean and 95%CI 
+t.test(airquality$Temp)
+#
+# linear regression for mean and std Err
+summary(lm(Temp ~ 1, data=airquality))
+
+
+```
+<br>Return to [index](#index)<br>
+
+# merge {#merge}
+
+R has a basic <tt>merge</tt> function but it is recommended to use the <tt>dplyr</tt> package.
+Have a look at the documentation:<br>
+<tt>?dplyr::join</tt>
+<br><br>
+
+<br>Return to [index](#index)<br>
+
+# mhodds {#mhodds}
+
+The Mantel-Haenszel Test is implemented in <tt>mantelhaen.test</tt><br><br>
+
+```{r tut=TRUE}
+# genrate binary variable abort = TRUE if induced > 0 or spontaneous > 0   
+# STATA generate abort = induced > 0 | spontaneous > 0  
+infert$abort <- infert$induced > 0 | infert$spontaneous > 0
+# crosstab 
+# STATA tab abort case
+table(infert$abort, infert$case)
+# Mantel-Haenszel Test stratified by educational level
+# STATA mhodds case abort eduction
+mantelhaen.test(infert$case, infert$abort, infert$education)
+
+
+```
+<br>Return to [index](#index)<br>
+
+# mvdecode mvencode {#mvdecode}
+
+Handling missing data in R is a bit tricky. The function <tt>is.na</tt> checks if a value 
+is missing. <br><br>
+
+```{r tut=TRUE}
+# STATA mvdecode Month, mv(9)  
+airquality$Month[airquality$Month == 9] <- NA
+table( airquality$Month, useNA="ifany")
+# STATA mvdecode _all, mv(999)  
+airquality[airquality == 999] <- NA
+
+# STATA mvencode Ozone, mv(999)  
+airquality$Ozone[is.na(airquality$Ozone)] <- 999
+table( airquality$Ozone, useNA="ifany")
+
+
+```
+<br>Return to [index](#index)<br>
+
+# predict {#predict}
+
+Predicted values in regression models can be estimated via <tt>predict</tt>. 
+Residuals are stored in <tt>mymodel$residuals</tt>.
+</tt><br><br>
+
+```{r tut=TRUE}
+# Predicted values with no missing data
+# STATA regress Wind Temp
+# STATA predict pred, xb 
+model.1 <- lm(Wind ~ Temp, data=airquality) 
+summary(model.1)
+airquality$pred <- predict(model.1)
+# STATA predict resid, residuals
+airquality$resid <- model.1$residuals
+summary(airquality)
+
+# Predicted values with missing data
+model.2 <- lm(Ozone ~ Solar.R, data=airquality) 
+summary(model.2)
+airquality$pred <- predict(model.2, newdata = airquality)
+airquality$resid[-c(model.2$na.action)] <- model.2$residuals
+summary(airquality)
+
+```
+<br>Return to [index](#index)<br>
+
+# qnorm {#qnorm}
+
+Use <tt>qqnorm</tt> to genrate a normal Q-Q plot. 
+See [regress](#regress) for a normal Q-Q plot of the residuals from a regression model. 
+<br><br>
+
+```{r tut=TRUE}
+# STATA qqnorm Wind
+qqnorm(airquality$Wind)
+
+
+```
+<br>Return to [index](#index)<br>
+
+# ranksum signrank ttest {#ttest}
+
+R's function for Student's t-test is <tt>t.test</tt>. 
+Note that Stata assumes by default equal variances whereas R assumes unequal variances.
+Stata's <tt>ranksum</tt> and <tt>signrank</tt> translates to <tt>wilcox.test</tt> in R. 
+<br><br>
+
+```{r tut=TRUE}
+# unpaired t-test (equal var)
+# STATA ttest age, by(case)
+t.test(age ~ case, data = infert, var.equal = T)
+# unpaired t-test (unequal var - Welch's approx)
+# STATA ttest age, by(case) welch
+t.test(age ~ case, data = infert)
+# nonparametric
+# STATA ranksum age, by(case) welch
+wilcox.test(age ~ case, data = infert)
+
+# paired t-test
+# STATA ttest spontabeous == induced
+t.test(infert$spontaneous, infert$induced, paired=T)
+# nonparametric Wilcoxon matched-pairs signed-ranks test
+# STATA signrank spontabeous == induced
+wilcox.test(infert$spontaneous, infert$induced, paired=T)
+
+
+```
+<br>Return to [index](#index)<br>
+
+
+# recode {#recode}
+
+There is no function in R which has the same flexibility as Stata's <tt>recode</tt>.
+A useful function is <tt>recode</tt> in the <tt>dplyr</tt> package.
+Note that numeric values have to be enclosed in backticks ` and that replacements have to be specified exhaustively (other values will be set to <tt>NA</tt>).
+If you would like to recode only a single or few values see <tt>[replace](#replace)</tt>.<br>
+Stata has also a <tt>recode</tt> function which can be used together with 
+<tt>generate</tt> to split numerical values into groups.
+If you would like to split a numerical variable into quantiles see <tt>[xtile](#xtile)</tt>
+<br><br>
+
+```{r tut=TRUE}
+# Recoding numerical values
+# STATA recode Month (5 9 = 0) (6/8 = 1), generate(Summer) 
+library(dplyr)
+airquality$Summer <- recode(airquality$Month, `5` = 0, `6` = 1, `7` = 1, `8` = 1, `9` = 0)
+airquality$Summer
+
+# Categrize Ozone into <=50, <=100, 101+
+# STATA generate OzoneCat = recode(Ozone, 50, 100, 200) 
+airquality$OzoneCat <- cut(airquality$Ozone, breaks=c(0,50,100,200), include.lowest=T)
+airquality$OzoneCat
+
+```
+<br>Return to [index](#index)<br>
+
+# regress  rvfplot {#regress}
+
+R's function for linear regression is <tt>lm</tt> (for 'linear model').
+Regression diagnostic plots can be obtained with the generic <tt>plot</tt> function.
+<br><br>
+
+```{r tut=TRUE}
+# STATA regress Temp Ozone 
+model.1 <- lm(Temp ~ Ozone, data=airquality) 
+summary(model.1)
+
+# Get confidence intervals
+confint(model.1)
+
+# Ressiduals vs fitted plot
+plot(model.1, which = 1)
+
+# normal Q-Q plot of the residuals
+plot(model.1, which = 2)
+
+```
+<br>Return to [index](#index)<br>
+
+# rename {#rename}
+
+Variable names can be manipulated with <tt>colnames(mydata)</tt>.
+<br><br>
+
+```{r tut=TRUE}
+# STATA rename Solar.R solar
+colnames(airquality)
+colnames(airquality)[2] <- "solar"
+colnames(airquality)
+# STATA rename _all, lower
+colnames(airquality) <- tolower(colnames(airquality))
+colnames(airquality)
+
+```
+<br>Return to [index](#index)<br>
+
+# replace {#replace}
+
+<tt>replace</tt> is usually used with the conditional statement <tt>if</tt>.
+In R this is either done via conditional indexing, the <tt>ifelse</tt> function or 
+<tt>mutate</tt> in the <tt>dplyr</tt> package.<br><br>
+
+```{r tut=TRUE}
+# with indexing
+# STATA replace age = 40 if age > 40
+infert$age[infert$age > 40] <- 40
+table(infert$age)
+# with ifelse
+# STATA replace age = 35 if age > 35
+infert$age <- ifelse(infert$age > 35, 35, infert$age)
+table(infert$age)
+# with mutate
+# STATA replace age = 30 if age > 30
+library(dplyr)
+infert <- mutate(infert, age = ifelse(age > 30, 30, age))
+table(infert$age)
+
+```
+<br>Return to [index](#index)<br>
+
+# reshape {#reshape}
+
+A function with the same name is available in R. If you often transform data, 
+consider the package <tt>reshape</tt>.<br><br>
+
+```{r tut=TRUE}
+# with indexing
+# STATA reshape wide Ozone Solar.R Wind Temp, i(Day) j(Month)
+air.wide <- reshape(airquality, direction="wide",idvar="Day",timevar="Month")
+head(air.wide)
+
+
+```
+<br>Return to [index](#index)<br>
+
+
+# sample {#sample}
+
+A sub sample of the dataset can be obtained with the <tt>sample</tt> function but the
+<tt>dplyr</tt> package provides more features including stratified sampling. 
+<br><br>
+
+```{r tut=TRUE}
+# STATA sample 4, count by(Month) 
+library(dplyr)
+sub.sample <- airquality %>%
+  group_by(Month) %>%
+  sample_n(4)
+head(sub.sample, 10)
+
+
+```
+<br>Return to [index](#index)<br>
+
+
+# save {#save}
+
+To save a dataset in a separated format use the function 
+<tt>write.table(mydata, "mydata.txt")</tt>. 
+There are in addition the functions <tt>write.csv</tt> and <tt>write.csv2</tt> which are
+doing the same with different default settings for the arguments. However, it
+is recommended to specify the arguments individually (see the example).
+Note: R's <tt>save</tt> function is doing something else. 
+It saves one or several R objects to an Rdata file. 
+<br>Examples:<br><tt>
+write.table(infert, "mydata.csv", sep= "&#92;t",  na= "NA", dec= ".", row.names= F, col.names = T)<br>
+&#35; Example below does only work on Windows:<br>
+write.table(infert, "clipboard", sep= "&#92;t",  na= "NA", dec= ".", row.names= F, col.names= T)
+</tt>
+<br><br>
+
+
+<br>Return to [index](#index)<br>
+
+
+# scatter {#scatter}
+
+R's generic <tt>plot</tt> function will produce a scatter-plot if the first 2 arguments 
+are numeric variables. 
+<br><br>
+
+```{r tut=TRUE}
+# STATA scatter Ozone Temp 
+plot(airquality$Ozone, airquality$Temp)
+
+# STATA twoway (scatter Ozone Temp if Month == 5) ...  (scatter Ozone Temp if Month == 9) 
+plot(airquality$Ozone, airquality$Temp, col=airquality$Month)
+
+
+```
+<br>Return to [index](#index)<br>
+
+
+
+# sort {#sort}
+
+
+Sorting a dataset in R is not really intuitive. Therefore, many people prefer the R package <tt>dplyr</tt><br><br>
+
+```{r tut=TRUE}
+# STATA sort Temp 
+airquality <- airquality[order(airquality$Temp), ]
+head(airquality)
+# using package dplyr
+library(dplyr)
+airquality <- arrange(airquality, Temp)
+head(airquality)
+
+```
+<br>Return to [index](#index)<br>
+
+# tabulate tab1 {#tabulate}
+
+Useful functions in R include <tt>table prop.table addmargins</tt>.
+Note: R will omit missing values unless the argument <tt>useNA="ifany"</tt> is specified. Unlike Stata, Chi^2^ and Fisher's exact test have to be specified. <br><br> 
+
+```{r tut=TRUE}
+# STATA tabulate Ozone
+table(airquality$Ozon)
+# STATA tabulate Ozone, missing
+table(airquality$Ozon, useNA="ifany")
+
+# genrate binary variable abort = TRUE if induced > 0 or spontaneous > 0   
+# STATA generate abort = induced > 0 | spontaneous > 0  
+infert$abort <- infert$induced > 0 | infert$spontaneous > 0
+# STATA tabulate abort case
+table(infert$abort, infert$case)
+addmargins(table(infert$abort, infert$case))
+# STATA tabulate abort case, row
+prop.table(table(infert$abort, infert$case), margin = 1)
+# STATA tabulate abort case, chi exact
+chisq.test(infert$abort, infert$case)
+fisher.test(infert$abort, infert$case)
+
+# STATA tab1 _all
+apply(infert, 2, table)
+
+```
+<br>Return to [index](#index)<br>
+
+
+# xi {#xi}
+
+Stata's xi prefix can be used for different purposes. 
+Particular important is that the <tt>xi: ... i.myvariable </tt> notation to tell Stata 
+that <tt>myvariable</tt> is a categorical variable. Categorical variables are called 
+factors in R and the first step when we use a new dataset should be to explore which 
+variables are numeric and which categorical using the <tt>str</tt>. A numeric variable 
+can be converted to a factor using the function <tt>as.factor</tt>.
+
+
+```{r tut=TRUE}
+# Inspect the variable types of data infert
+str(infert)
+# Logistic regression to assess the effect of education on case
+# Note: this variable is a factor
+# STATA xi: logit case i.eduction
+model.1 <- glm(case ~ education, data=infert, family="binomial")
+summary(model.1)
+# Logistic regression to assess the effect of induced on case
+# Note: this variable is numeric
+# STATA xi: logit case i.induced
+model.2 <- glm(case ~ as.factor(induced), data=infert, family="binomial")
+summary(model.2)
+```
+<br>Return to [index](#index)<br>
+
+# xtile {#xtile}
+
+To split a numeric variable into quantiles you need to combine <tt>cut</tt> and <tt>quantile</tt>. alternatively you can use <tt>ntile</tt> (<tt>dplyr</tt> package).<br><br> 
+
+```{r tut=TRUE}
+# split Ozone into quartiles
+# STATA xtile Ozone4 = Ozone, nq(4)
+airquality$Ozone4 <- cut(airquality$Ozone, 
+          breaks = quantile(airquality$Ozone, probs=c(0, 0.25, 0.5, 0.75, 1), na.rm = T),
+          include.lowest = T)
+table(airquality$Ozone4)
+#
+# split Temp into quartiles using the dplyr package
+# STATA xtile Temp4 = Temp, nq(4)
+library(dplyr)
+airquality <- mutate(airquality, Temp4 = ntile(Temp, 4))
+table(airquality$Temp4)
+```
+<br>Return to [index](#index)<br>
