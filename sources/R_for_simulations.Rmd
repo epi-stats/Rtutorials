@@ -1,0 +1,613 @@
+---
+title: " Random numbers, sampling & loops: Simulations with R"
+output:
+  bookdown::html_document2: 
+    number_sections: false 
+    toc: true
+    toc_float: true
+    smart: false
+---
+  
+  
+```{r, include=FALSE}
+knitr::opts_chunk$set(comment = NA)
+tutorial::go_interactive(greedy=FALSE,  height = 250)
+```
+
+# Simulations {#sim}
+
+Simulations are not only important for statistics but also for a variety of other areas, 
+e.g. Markov chain Monte Carlo, bootstrap or stochastic disease transmission models.
+All simulations have in common that there is a need to introduce randomness. 
+Typically, simulation require repeated random sampling, random number generation or both.<br><br>
+Therefore, to perform simulations we need to know the following:<br>
+How to select random samples?<br> 
+How to generate random numbers?<br>
+How to execute R code repeatedly?<br> 
+How to track the results from each simulation run?
+
+# <tt>sample</tt> and <tt>replicate</tt>  {#sample}
+  
+R's function <tt>sample</tt> can perform sampling with and without replacement.<br>
+<tt>sample(1:6, 3)</tt> selects 3 random numbers from 1 to 6 without replacement,
+i.e. each element can occur only once in the sample.<br>
+<tt>sample(1:6, 3, replace = T)</tt> will also select 3 random numbers but with replacement. 
+Therefore, in the sample a certain number might occure more than once. 
+In contrast to sampling without replacement, the sample size can be higher 
+than the number of items to be sampled from, 
+e.g. you can simulate rolling a six-sided die 10 times with:<br>
+<tt>sample(1:6, 10, replace = T)</tt><br>
+Often, we will not sample from a sequence of numbers but from observed data
+which is done in the same way, 
+e.g. sample 50 values from variable <tt>Temp</tt> in dataset <tt>airquality</tt>:<br> 
+<tt>sample(airquality$Temp, 50)</tt><br> 
+
+For many applications, you need to select many random samples. 
+Therefore, you need to execute some R code several times. 
+The R function <tt>replicate(n_times, any_r_code)</tt> will execute <tt>'any_r_code'</tt> 
+exactly <tt>'n_times'</tt>.<br><br> 
+
+<b>Example: Poker hands</b><br>
+A deck of poker cards has 52 card with 13 different ranks (2 to 10, J, Q, K & ace).
+If you draw 5 random cards, What is the probabaility of getting 3 or 4 of a kind?
+To see how many cards of the same kind in our hand we can use the function 
+<tt>table</tt>. It is a bit tricky to store the entire table from all simulation runs.
+Therfore, we store only the highest value with <tt>max</tt>. 
+<br><br>
+
+```{r tut=T, height=250}
+# Generate the deck
+deck <- rep(1:13, 4)
+deck
+# Draw 5 cards randomly and see how many cards are of the same kind you have
+table(sample(deck, 5))
+# Repeat this 10000 times and store from each run the highest number of cards of the same kind
+maxSameKind <- replicate(10000, max(table(sample(deck, 5))))
+# Frequency table of '2/3/4 of a kind' from 10000 hands
+table(maxSameKind)
+
+```
+
+<br><br>
+
+<b>Example: Block randomization</b><br>
+In randomized clinical trials, a simple random allocation scheme (flipping a coin
+for each participant) might by chance result in an unequal number of individuals
+per trial arm. Block randomization is a commonly used technique to ensure a balanced
+number of participants in each treatment arm.  In a clinical trial with 2 treatment arms (A and B), a block size of 4 will result in 6 possible permutations AABB, ABAB, BABA, ABBA, BAAB, BBAA. <br>
+A colleague asks you to generate a random allocation sequnece for a clinical trial with 2 arms,
+a block size of 4 and a total sample size of 200. 
+Generating 1 random permutation is done by:<br>
+<tt>sample(c("A","A","B","B"), 4)</tt><br>
+All we have to do is to repeat the procedure 50 times.
+<br><br>
+
+```{r tut=T, height=200}
+# Generate the allocation sequqence as 2 dimensional matrix  
+allocation <- replicate(50, sample(c("A","A","B","B"), 4))
+# Inspect the first 8 blocks
+allocation[, 1:8]
+# Convert the matrix to 1 dimension
+allocation <- c(allocation)
+allocation
+
+```
+
+<br><br>
+
+<b>Example: Bootstrap confidence intervals</b><br> 
+Sometimes you would like to estimate the 95% confidence intervals of a parameter for which no 
+suitable formula exists. For example, to estimate the 95% CI for the median is 
+much more complicated compared to the interval for the arithmetic mean.<br>
+A good way to solve this problem is to apply bootstrap resampling.
+A bootstrap sample of a variable or dataset is a sample of the same size of the original 
+data where the observations are sampled with replacement. 
+Bootstrap samples of the numbers 1 to 8 might look as in the table below:
+
+```{r tut=F, echo=F}
+ knitr::kable(data.frame(cbind(`Sample No` = c("original", 1:5), 
+    t(cbind(1:8, replicate(5, sort(sample(1:8, 8, replace=T))))
+     ))),               col.names = c("Sample #",paste("Value", 1:8)), booktabs = TRUE,
+   caption = 'Bootstrap resamples of numbers 1 to 8',
+   align= c('l', 'c', 'c', 'c', 'c', 'c', 'c', 'c', 'c')
+ )
+
+ # knitr::kable(data.frame(t(replicate(5, sort(sample(1:8, 8, replace=T))))), 
+ # 
+ #                         booktabs = TRUE, caption = 'Bootstrap resamples of numbers 1 to 8'
+ # )
+
+```
+
+Confidence interval estimation via bootstrap resampling requires the following steps:<br><br>
+1. Generate a bootstrap resample, i.e. random sample of your data of the same size with relacement.<br>
+2. Estimate the parameter oif interest.<br>
+3. Replcate steps 1 & 2 many times.<br>
+3. The 2.5% and 97.5% percentiles of all estimates represent the 95% CI.<br><br>
+
+The dataset <tt>airquality</tt> (daily air measurements in New York, 1973) has the 
+variable Temp (temperature in Fahrenheit). We would like to estimate the  95% CI of the mean
+via bootstrap resampling. 
+Note: The one sample <tt>t.test</tt> estimates the 95% CI at  76.4 - 79.4. 
+Let's see if we get similar results.
+<br><br>
+
+```{r tut=T, height=200}
+# Number of observations of data airqualty 
+N <- nrow(airquality)
+# Generate bootstrap resamples 
+boot.samples <- replicate(1000, sample(airquality$Temp, N, replace=T))
+# Calculate the means from each sample
+boot.means <- colMeans(boot.samples)
+# Get the percentiles
+quantile(boot.means, probs=c(0.025, 0.975))
+
+```
+
+<br><br>
+
+
+
+<b>Exercise: Birthday paradoxon</b><br>
+You have a group of 23 randomly chosen persons. 
+What is the probability that (at least) 2 people share the same birthday?<br>
+We could calculate the probability with the hypergeometric distribution but we don't
+have the formula at hand and would like to simulate it.
+To simulate the birthday from 23 persons, we sample randomly 23 numbers from 1 to 365
+with replacement. <br>
+To check if there are any duplicated numbers in each sample we can wrap <tt>sample</tt> in the 
+function <tt>anyDuplicated</tt> which returns 0 if there are no duplicated values.
+Finally, we replicate this 1000 times and count the 0's.<br>
+Don't be surprised: the proportion is roughly 50%.
+Complete the code below:<br><br>
+
+```{r ex="birthday", tut=T, type="sample-code", height=100}
+# Generate 1000 birthdays for 23 persons and check if there are duplicated values 
+days <- replicate(1000, anyDuplicated(sample(...
+# Table of simulation runs with no duplicates (0 == TRUE) and duplicates (0=FALSE)
+table(days == 0)
+
+```
+
+```{r ex="birthday", tut=T, type="solution", height=100}
+# Generate birthdays for 23 persons and check if there are any duplicated values
+#  - anyDuplicated returns 0 if there are no duplicates, otherwise index of 1st duplicate    
+anyDuplicated(sample(1:365, 23, replace = T))
+# Replicate 1000 times birthdays ond store the resuts in 'dubDays' 
+dubDays <- replicate(1000, anyDuplicated(sample(1:365, 23, replace = T)))
+# Table of simulation runs with no duplicates (0 == TRUE) and duplicates (0=FALSE)
+table(dubDays == 0)
+
+```
+
+<br>
+
+# Random numbers  {#random}
+
+Sampling from probability distributions
+
+Rather than sampling from a set of numbers, we might want to get samples from a 
+probability distributions, e.g. from the normal distribution.
+To get a sample of size 10 from a normal distribution with mean of 5 and standard deviation
+of 2 we can use the function <tt>rnorm</tt> as follows:<br>
+<tt>rnorm(10, mean = 5, sd = 2)</tt><br>
+The colleague from the previous chapter visits you again and has another question:
+A trial should be designed and they assume that in the control group the persons will have 
+a normally distributed outcome with mean 5 and standard deviation 4 whereas in the 
+treatment group people are expected to show an outcome with mean 3 and standard deviation 1.
+Sample size is fixed at 100 persons (no refusals or loss to follow-up) 
+and randomisation should be done with a ratio of 1:2. 
+You are asked to determine the statistical power if the assumptions are correct.<br>
+You know the sample size formula for Student's t-test but you are not sure if the formula 
+holds if standard deviation and sample size per group differs.
+Therefore, you decide to simulate it.<br>
+Note: if you have more than 1 line of code to <tt>replicate</tt> 
+you can enclose them in curly brackets: 
+
+```{r tut=F, echo=T, results='hide'}
+replicate(100, {
+  #... some R code ... 
+  #... more R code ... 
+  } 
+)
+
+```
+
+Let's start the simulation to estimate power wich is the proportion of simulation runs
+with P-values below 0.05.<br><br>
+
+```{r tut=T}
+# Store P-values in Ps
+Ps <- replicate(1000, {
+  # Simulate control (n = 33) and treatment (n = 76) group
+  control <- rnorm(33, 5, 4)
+  treatment <- rnorm(67, 3, 1)
+  # calculate P
+  t.test(control, treatment, var.equal = F)$p.value
+ }
+)
+# Frequency table: number of p-values below 0.05
+table(Ps < 0.05)
+
+```
+
+<br><br>
+Similarly, we have the functions <tt>rbinom</tt> and <tt>runif</tt> to genrate binomial 
+and uniform distributed random values.  
+For instance to simulate 10 coin flips use:<br>
+```{r tut=F, echo=T, collapse=TRUE}
+rbinom(10, 1, 0.5)
+``` 
+
+The 10 indicates the number of values to generate, the 1 the number of trials 
+(which is 1 for binary data) and the 0.5 the probability of success which is 50%
+for a coin flip.<br><br>
+
+
+<b>Exercise: Binomial distribution</b><br>
+The binomial distribution is discrete but can approximate the normal distribution
+if B(n, p) n is large and p is close to 50%.
+Let's see if this is true. To get n large we will not flip a single coin 500 times
+but we will flip our entire purse (which has 20 coins inside) 500 times.
+Each time we will record the number of heads of the 20 coins.
+Finally, will plot a histogram to see the distribution.
+Complete the code below: <br><br>
+
+```{r ex="flip", tut=T, type="sample-code"}
+# Simulate flipping 500 times 20 coins and count the number of headseach time   
+nHeads <- rbinom( ...
+# Plot a histogram
+hist(nHeads, breaks=0:20)
+
+                  
+
+```
+
+```{r ex="flip", tut=T, type="solution"}
+# Simulate flipping 100 times 20 coins and count the number of headseach time   
+nHeads <- rbinom(500, 20, 0.5)
+# Plot a histogram
+hist(nHeads, breaks=0:20)
+
+```
+
+<br>
+
+# <tt>for</tt> loops  {#loops}
+
+The function <tt>replicate</tt> executes the same R code several times. 
+Unfortunately, in most situations you would like not to execute exactly the same code 
+several times but run each time a slightly different code.<br>
+R, like all programming languages, has loops for this pourpose.
+The most important loop is the <tt>for</tt> loop. 
+In loops you specify an iterator (often <tt>i</tt>) and a sequence. 
+R will execute the code within the loop body in exactly the same way. 
+The only difference is that the iterator gets a new value in each loop - 
+always the next value from the elements in the sequence.
+The R code has to be enclosed in curly brackets.
+```{r tut=F, echo=T, collapse=TRUE}
+for(i in 1:3){
+  print(i)
+}
+``` 
+Note: R usually prints all output in the console but not if the code is enclosed in curly brackets. In this case you have to specify <tt>print</tt> if you would like to display the output.<br><br>
+
+<b>Examples: Loop over variables</b><br>
+
+Loops can also be used to loop over variables. 
+The code below can be used to print tables of the first 6 variables of the dataset 
+<tt>infert</tt>  (case control study on risk factors for infertility).<br><br>
+
+```{r tut=T}
+for(i in 1:6){
+  # print name of the i-th variable
+  print(colnames(infert)[i])
+  print(table(infert[, i]))
+}
+``` 
+
+<br><br>
+
+Sometimes we would like to visualize more than one variable in the same graph.
+We will use the dataset <tt>airquality</tt>
+for illuatration. 
+<br><br>
+```{r tut=T}
+# Generate Date
+date <- ISOdate(1976, airquality$Month, airquality$Day)
+# Plot variable Ozone over time
+plot(date, airquality$Ozone, type="l")
+for(i in 2:4){
+  # add line of i-th variable in color ii
+  lines(date, airquality[, i], col=i)
+}
+``` 
+<br><br>
+
+
+<b>Example: Storing results from each loop</b><br>
+In the introduction was mentioned that it is important to 
+track the results from each simulation run?
+A good way is to create a placeholder which will be updated in each loop.
+Let us translate the bootstrap example into a loop: 
+
+```{r tut=T}
+# Number of observations of data airqualty 
+N <- nrow(airquality)
+# Generate empty placeholder
+boot.means <- rep(NA, 1000)
+
+for(i in 1:1000){
+   # Generate bootstrap resamples 
+   boot.sample <- sample(airquality$Temp, N, replace=T)
+   # Store mean at position i
+   boot.means[i] <- mean(boot.sample)
+}
+# Get the percentiles
+quantile(boot.means, probs=c(0.025, 0.975))
+
+```
+
+<br><br>
+
+<b>Exercise: Euler's number</b><br>
+The number e can be calculate in several ways.<br>
+One way is<br>
+e = 1/0! + 1/1! + 1/2! ... + 1/n!<br>
+Where the ! operator represents the factorial. 
+In R we calculate 5! with  <tt>factorial(5)</tt>.
+Complete the code below to use a loop to calculate 1/0! + ... + 1/10!: <br><br>
+
+```{r ex="e", tut=T, type="sample-code"}
+# Generate empty placeholder: 10 times NA  
+oneDivFacutly <- rep(NA, 10)
+
+for(i in 0:10 ...
+    # Store result of 1/i!  
+    ...
+}
+# Show the sum 
+sum(oneDivFacutly)
+
+```
+
+```{r ex="e", tut=T, type="solution"}
+# Generate empty placeholder: 10 times NA  
+oneDivFacutly <- rep(NA, 10)
+
+for(i in 1:10){
+    # Store result of 1/i! in  
+    oneDivFacutly[i] <- 1/factorial(i)
+}
+# Show the sum (add + 1 because we excluded 1/0! = 1)
+sum(oneDivFacutly) + 1
+
+```
+
+```{r ex="e", tut=T, type="hint"}
+Hint: use `oneDivFacutly[i] <-` for assignment
+```
+
+<br><br>
+
+# Conditional execution with <tt>if</tt> {#if}
+
+Sometimes you wish that parts of your code within a loop will only be executed 
+if a certain condition is true.
+In the example below the loop is executed 5 times but only if <tt>i</tt> is greater than 3, 
+the value will be displayed.<br>
+
+```{r tut=F, echo=T, collapse=TRUE}
+for(i in 1:5){
+  if(i > 3) print(i)
+}
+``` 
+<br>
+Of course, if there is an <tt>if</tt> than there is an <tt>else</tt>, too. 
+Assume you would like to loop over all variables of a dataset and you would like
+to perform one action if the variable has no missing values and another action
+if the variable has missing values:<br><br>
+
+```{r tut=T}
+# loop over all variables from dataste airquality 
+for(i in 1:6){
+  # Count the number of missing values of the i-th variable 
+  NAs <- sum(is.na(airquality[,i]))
+  # If there are no missing values print "no"
+  if(NAs == 0) print("No missing values")
+  # If there are missing values print the number
+  else print(c(NAs, "missing values"))
+}  
+
+``` 
+
+
+
+<br><br>
+
+ 
+# Recapitualtion {#recap}
+To put all together we will replicate a simulation study done by Freedman in 1983.<br>
+
+https://amstat.tandfonline.com/doi/abs/10.1080/00031305.1983.10482729 <br>
+
+Researchers often collect hundreds of variables and it is impossible to run a multiple
+regression with all of them. Often, in a first step variables will be identified 
+which are associated with the outcome (e.g. p < 0.25) and only those will be included 
+in the final multivariable model. 
+It is well known that this approach leads often to spurious results.<br> 
+Freedman published in 1983 the results from a simulation to show the extend of the problem.<br><br>
+
+The simulation can be broken down into 3 main steps:<br>
+1) A data set was created with 51 variables and 100 observations each.
+All values were pure noise, i.e. random numbers drawn from the standard normal 
+distribution.	The last variable was taken as outcome variable, the other 50 as predictors.<br>
+2) 50 bivariable linear regressions were run: outcome and each of the 50 predictors.<br> 
+3) All predictor variables that were associated with p values < 0.25 were included 
+in the final multiple regression model.<br><br>
+
+Take a minute to think about how to approach each step.<br><br> 
+
+The first step seems to be easy. We can use <tt>rnorm</tt> to generate random numbers. 
+If we combine it with <tt>matrix</tt>. We have almost a dataset:<br>
+<tt>df <- matrix(rnorm(5100, 0, 1), nrow=100)</tt><br>
+We just need to transform it into a true dataset and we need to find out the 
+variable names.<br><br>
+The 2nd step is also solvable. We run 50 bivariable regressions using always the last 
+variable (<tt>X51</tt>) as outcome and one by one of the 50 others as predictor. 
+A loop can easily perform this operation. 
+There is only one tricky thing: we need to store the p-values.
+Extracting P-values from regression models is not really intutive but can be do ne as follows: 
+<br>
+<tt>
+lin.1 <- lm(outcome ~ predictor)<br>
+P <- coef(summarize(lin.1))[2,4]
+</tt><br><br>
+For the 3rd step we simply keep only those variables with p < 0.25 and to
+run the multivariable model with the remaining ones.<br><br>
+
+
+```{r tut=T, height=500}
+# Generate a matrix with random numbers (100 x 51)
+mat <- matrix(rnorm(5100, 0, 1), nrow = 100)
+# Convert it to a dataset
+df <- data.frame(mat)
+# Check the variable names
+colnames(df)
+# Create something to store the P values
+Ps <- rep(NA, 50)
+
+for(i in 1:50){
+   # Run gregession with last variable as outcome and i-th variable as predictor
+   linmod <- lm(df$X51 ~ df[,i]) 
+   # Store P
+   Ps[i] <- coef(summary(linmod))[2,4]
+}
+
+# Keep only the variables with P < 0.25 (and the outcome #51)
+keep <- which(Ps < 0.25)
+keep <- c(keep, 51)
+keep
+df <- df[, keep]
+
+# Run the multivariable regression (note: . indicates all other variables)
+multmod <- lm(X51 ~ ., data=df)
+summary(multmod)
+
+```
+
+<br><br>
+
+
+# Advanced examples {#adv}
+
+<b>Example: <tt>sample</tt> with the <tt>probs</tt> argument</b><br>
+Sometimes you would like to select a random sample but the elements should 
+have different selection probabilities.<br> 
+Nate Silver's internet page fivethirtyeight.com had a nice probability puzzle some 
+time ago:<br> 
+
+https://fivethirtyeight.com/features/who-wants-to-be-a-riddler-millionaire/ <br>
+
+
+You are in the game show “Who Wants to Be a Millionaire?” and you’ve made it to the 
+final question.
+Out of the four choices, A, B, C and D, you’re 70 % sure the correct answer is B, 
+and none of the remaining choices looks more plausible than another. 
+You use your 50:50 lifeline which leaves you with two possible answers, one of them correct. 
+Fortunately, B remains an option! How confident are you now that B is the correct answer?<br>
+On the first view this looks like a Monty Hall problem but it is in fact not.
+It can be easily solved using Bayes' theorem but you can also solve it easily via 
+simulations. Note: the function <tt>setdiff(set1, set2)</tt> returns the elements of set1 
+which are not in set2, e.g.<br>
+<tt>setdiff(1:5, 2:4)</tt> returns 1 and 5<br><br>   
+
+```{r tut=T}
+Bright <- 0
+Bwrong <- 0
+Answers <- c("A","B","C","D")
+
+for(i in 1:2000){
+  # Select randomly correct Answer - You are 70% sure that B is correct
+  correctAnswer <- sample(Answers, 1, prob = c(0.1,0.7,0.1,0.1))
+  incorrectAnswers <- setdiff(Answers, correctAnswer)
+  # 50:50 joker: remove 2 answers - Only incorrect answers can be removed
+  removedAnswers <- sample(incorrectAnswers, 2)
+  # If B remains an option, check if B is correct
+  if(!"B" %in% removedAnswers){
+     if(correctAnswer == "B") Bright <- Bright + 1
+     if(correctAnswer != "B") Bwrong <- Bwrong + 1
+  }
+}
+Bright/(Bright+Bwrong)
+```
+
+<br><br>  
+
+<b>Example: Nested loops & Bayes' Billiards Problem</b><br>
+Bayes' invented a game in 1763 which Bayesianists love because it is
+very easy to solve with Bayesian statistics but not at all with a frequentists approach.
+The rules are as follows:<br>
+Alice and Bob are playing a game:<br>
+A casino has a pool table that A and B can't see.<br> 
+The Casino rolls an initial ball onto the table, which comes to rest at a random position.<br>
+Than, the Casino rolls additional balls randomly. 
+If the ball rests above the initial ball, 
+Alice scores a point; below the initial ball, Bob scores a point.<br>
+The Casino reveals only who won each point.<br>
+
+
+```{r tut=F}
+##############################################
+##                                          ##      
+#     Alice's area                           #
+#                                            #
+# --- (0) <- initial ball  ---------------   # 
+#                                            #  
+#     Bob's area                             #
+#                                            #  
+#              (1) <-1st new ball (Bob +1pt) #
+##                                          ##
+##############################################
+```
+
+<br>
+The first with 6 points wins.<br>
+<b>Imagine Alice is leading 5 to 3.
+What is the probability that Bob is winning?</b><br>
+If you are a hero in Bayesian statistics or not, 
+it is possible to answer the question via simulations.
+In the example below we use a loop within another loop.
+The implementation of nested loops is possible but 
+the name of the iterator has to be 
+different (i and j in this example).<br><br>
+
+```{r tut=T, height=450}
+# Run the initial ball (5000 times = 5000 simulations)
+bobWins <- 0
+aliceWins <- 0
+for(i in 1:5000){
+  scoreAlice <- 0
+  scoreBob <- 0
+  initialBall <- runif(1)
+  for(j in 1:8){
+    newBall <- runif(1)
+    if(newBall > initialBall)   scoreAlice <- scoreAlice + 1 
+    else scoreBob <- scoreBob + 1     
+  }
+  # Only continue if Alice has 5 out of 8 points 
+  if(scoreAlice == 5){
+    # Bob has to score 3 times in a row to win 
+    last3balls <- runif(3)
+    # If any of the 3 balls is a point for Alice than Alice wins 
+    if(any(last3balls > initialBall)) aliceWins <- aliceWins + 1
+    else bobWins <- bobWins + 1
+  }
+}  
+# calculate the proportinon of games Alice won
+bobWins/(aliceWins+bobWins)
+```
+
+
+
+
