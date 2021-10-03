@@ -1,0 +1,304 @@
+---
+title: "Writing own functions in R"
+output:
+  bookdown::html_document2: 
+    number_sections: false 
+    toc: true
+    toc_float: true
+    smart: false
+---
+  
+  
+```{r, include=FALSE}
+knitr::opts_chunk$set(comment = NA)
+tutorial::go_interactive(greedy=FALSE,  height = 50)
+```
+
+# Introduction {#intro}
+
+One strength of R is the user's ability to define own functions. 
+A function is simply some R code to perform a specific task.
+They are especially useful of you have some R code which you want to use repeatedly.
+You don't need functions, every task can also be done with plain code but functions have 
+several advantages:<br><br>
+Your code might be shorter and easier to interpret<br> 
+Your code is easier to maintain<br>
+It is easier to reuse functions in future R scripts<br><br> 
+
+You can write your own functions with the following syntax:<br><br> 
+<tt>my_function <- function(my_arguments) {</tt><br> 
+    <tt> # some R code to be executed </tt><br> 
+    <tt> return(my_result)</tt><br>
+<tt>}</tt><br><br>
+
+We define the function <tt>my_function</tt> with the keyword <tt>function()</tt>.
+The names of one and more arguments can be specified in round parentheses.
+Most functions require at least one argument but even if a function does not 
+require any arguments (e.g. <tt>dir()</tt> you have to type the round parentheses.
+Next, the body of the function – the R code to be executed – is contained within curly parentheses.
+Finally, you specify which value (i.e. which result) should be returned if the function is called with <tt> return(my_result)</tt>. 
+If you don't explicitly define a return value, the function will return 
+the last expression evaluated within the within curly parentheses.<br><br>
+
+ Traditionally, the first program written by people learning a new programming language,
+ is the famous Hello-World-Program. A program which displays the message "Hello, World!".
+ This function does not require any arguments, 
+ because independent from the input the output is always the same text message.
+ We define a new function with the name <tt>hello</tt> and in the function body 
+ we simply write some code to print "Hello, World!" in the R console.<br><br>
+ 
+```{r tut=T, height=20}
+# Generate the deck
+hello <- function() {
+   print("Hello, World!")
+}
+
+hello()
+
+```
+ 
+<br>
+You can see several things:<br><br>
+Although we don't use any arguments the round parentheses are provided after <tt>function</tt>.<br>
+Although R usually print all values (in this cases the text "Hello, World!")
+automatically if they are not assigned to a new object. 
+We used in this example the <tt>print</tt> function because R will not print an
+unassigned value if the code is enclosed within curly parentheses.<br>
+The function is called by typing the name of the function followed by parentheses.
+If you omit the parentheses <tt>hello</tt> R will return the code stored in the function.
+<br><br>
+
+# A simple function {#gm}
+
+R has not a function to calculate the geometric mean, so we will define one. 
+The geometric mean is the nth root of the product of n numbers.
+However, the product can be extremely large if n is getting high it is usually 
+calculated as the exponential of the arithmetic mean of logarithms which is in R language:<br>
+<tt>exp(mean(log(x)))</tt><br>
+where x is a numeric vector. If you don't know the term numeric vector, 
+it is simply a collection of numbers, e.g. <tt>c(2, 3.1, 0)</tt>  or <tt>5:10</tt>.<br>
+Have a look at the code below ro see how the function is defined:<br><br>
+
+```{r tut=T, height=50}
+geom.mean <- function(x) {
+   result <- exp(mean(log(x)))
+   return(result)
+}
+some_numbers <- c(1,10,100,1000)
+geom.mean(some_numbers)
+
+```
+
+We call the function <tt>geom.mean</tt> together with the argument x. 
+x contains the numbers to calculate the geometric mean from.
+You could also define the numbers directly in the function call:<br>
+<tt>geom.mean(c(1,10,100,1000))</tt><br>
+but usually you will apply the function to a variables in a dataset, 
+e.g. the variable <tt>Wind</tt> in the dataset <tt>airquality</tt> which is included in R. 
+Copy the line below in the code window above and execute the code again.<br>
+<tt>geom.mean(airquality$Wind)</tt><br>
+The code behaves in the same way as plain R code, 
+e.g. if x contains any negative numbers R would show the warning message:<br>
+<tt>[1] NaN</tt><br>
+<tt>Warning message:</tt><br>
+<tt>In log(x) : NaNs produced</tt><br>
+<br>
+Of course, you can assign the result to a new R object for later use 
+in the same ways you do it with other functions:<br>
+<tt>gm1 <- geom.mean(c(1,10,100,1000))</tt><br>
+<br><br>
+
+<b>Exercise</b><br> 
+The variable  <tt>Ozone</tt> in the dataset <tt>airquality</tt> has several 
+missing observations.
+Therefore, the following line:<br> 
+<tt>geom.mean(airquality$Ozone)</tt><br>
+will return <tt>NA</tt>.<br>
+Can you modify the code within the curly parentheses to omit the missing 
+values before the geometric mean is calculated (<tt>na.rm = T</tt>)?<br><br> 
+
+# Multiple arguments {#args}
+
+In most functions you can specify more than one argument. 
+The code below defines a new function <tt>exponentiate</tt> which has to arguments:
+the base b and the exponent n.
+<br><br>
+
+```{r tut=T, height=50}
+exponentiate <- function(b, n = 2) {
+   result <- b^n
+   return(result)
+}
+
+exponentiate(2, 10)
+```
+
+If you have multiple arguments, R expects that you provide them in the same order as 
+defined in the syntax. 
+If you would like to specify them in a different order, you have to provide in addition the argument names, i.e.:
+<tt>exponentiate(n = 10, b = 2)</tt><br>
+You have likly noticed that the argument n has a default value (<tt>b = 2</tt>).
+If you omit the argument, R will use the default value, e.g.:
+<tt>exponentiate(7) # result will be 7^2 = 49</tt><br>
+<br><br>
+
+<b>Exercise: Ancient Babylonian multiplication</b><br> 
+In ancient Babylon they had no positional numeral system (place-value notation).
+Like in ancient Rome they used symbols, each with a fixed integer value (like 1, 10, 100).
+Multiplication is not straight forward, so they used the following formula to multiply 2 numbers (x * y):<br>
+<tt>((x + y)^2 - (x - y)^2) / 4</tt><br>  
+Complete the code below to define the function babylon.<br><br>
+
+```{r ex="babylon", tut=T, type="sample-code", height=50}
+babylon <- function(x, y) {
+   # type the code for the Babylonian multiplication here 
+   return(result)
+}
+
+babylon(66, 55)
+```
+
+```{r ex="babylon", tut=T, type="solution", height=50}
+babylon <- function(x, y) {
+    result <- ((x + y)^2 - (x - y)^2) / 4
+   return(result)
+}
+
+babylon(66, 55)
+```
+<br><br>
+
+# Multiple results {#res}
+
+If you would like to return more than 1 result, the best way is to return them as a list.
+If you don't know what a list is: it is a collection of items like a vector but the
+single items can be of different classes, e.g. numbers, text, data frames, etc.
+The elements are usually named and can be accessed 
+like a variable in a data frame with the $ sign.<br>
+Let us define a function which calculates the odds ratio of a 2x2 table and
+the confidence interval. The upper limit of the confidence interval can be 
+approximated with the follwiong formula:<br>
+<tt>OR + 1.96 * sqrt(1/A + 1/B + 1/C + 1/D)</tt><br><br>  
+
+```{r tut=T, height=50}
+# A = number of exposed with disease, .., D = number unexposed without disease
+OR <- function(A, B, C, D) {
+   OR <- (A * D) / (B * C)
+   conf.int.low <- OR - 1.96 * sqrt(1/A + 1/B + 1/C + 1/D)
+   conf.int.high <- OR + 1.96 * sqrt(1/A + 1/B + 1/C + 1/D)
+   return(list(OR = OR, conf.int = c(conf.int.low, conf.int.high)))
+}
+
+or1 <- OR(30, 70, 40, 80)
+or1
+# Return only the confidence interval
+or1$conf.int
+```
+
+<br><br>
+
+# Condiotional execution with <tt>if</tt> {#if}
+
+Let us revisit the geometric mean example. The geometric mean is often used for 
+parasitic egg counts in stool samples. However, there is one problem: there are 
+usually also some negative stool samples, i.e. stool samples with 0 eggs. 
+If there is at least 0, the geometric mean is 0. Therefore, the formula is usually
+modified as:<br>
+<tt>exp(mean(log(x + 1))) - 1</tt><br>
+Our aim is to write a function which calculates the modified geometric mean if there 
+is at lest one 0 in x and the original formula if all numbers are positive.
+To check if there is at least one 0, we van use: <br> 
+<br>
+<tt>if (any(x == 0)){</tt><br>
+<tt>  # code to be executed</tt><br>
+<tt>}</tt><br><br>
+
+After <tt>if</tt>a condition is provided in round parentheses and only if the condition 
+is <tt>TRUE</tt> the code in the curly parentheses will be executed. As you see, it
+follows more or less the same logic as the parentheses for the functions.
+<br><br>
+
+
+```{r ex="gm2", tut=T, type="sample-code", height=50}
+geom.mean <- function(x) {
+  if(any(x == 0)) { 
+       print("0 detected, +1 added")
+       result <- exp(mean(log(x + 1))) - 1
+  }
+  if(all(x > 0)) { 
+       result <- exp(mean(log(x)))
+  }  
+  return(result)
+}
+
+geom.mean(c(0,10,100,1000))
+```
+
+```{r ex="gm2", tut=T, type="solution", height=50}
+geom.mean <- function(x) {
+  if(any(x < 0)) { 
+       stop("Negative numbers")
+  }  
+  if(any(x == 0)) { 
+       print("0 detected, +1 added")
+       result <- exp(mean(log(x + 1))) - 1
+  }
+  if(all(x > 0)) { 
+       result <- exp(mean(log(x)))
+  }  
+  return(result)
+}
+
+geom.mean(c(-1,10,100,1000))
+```
+
+<br><br>
+
+<b>Exercise</b><br> 
+It is impossible to calculate Geometric Mean with negative numbers. 
+Modify the code above that it produces an error with a warning massage 
+<tt> stop("Negative numbers")</tt> if there are any negative numbers in x.<br><br>
+
+# Anonymous functions  {#anon}
+
+Sometimes you need just a very short function and you need it only once. 
+This is for instance sometimes the case if you have your own function within the    
+<tt>by</tt> function. It is possible to define such a function directly without
+proper definition and without an own name.
+In the example below you would like to calculate the mean and the standard deviation of 
+the variable <tt>Wind</tt> stratified by month (data </tt>airquality</tt>).<br>
+Remember: <tt>by</tt> is used in the following way:<br>
+<tt> by(object_to_analyse, vector_defining_strata, function_to_apply)</tt><br><br>
+You need only a single line!<br><br>
+
+
+```{r tut=T, height=50}
+by(airquality$Wind, airquality$Month, function(x) c(mean(x), sd(x)))
+
+```
+
+# Passing arguments with <tt>...</tt> {#dots}
+
+Often a function is called within another function, e.g. in our geometric mean example
+we call the built-in function <tt>mean</tt> within our own <tt>geom.mean</tt> function.
+Sometimes you wish that some arguments of your newly defined function
+should be forwarded to a function called within it. 
+If you know in advance which arguments you would like to forward, you can simply
+put them as additional arguments. However, sometimes you do not know exactly at the time 
+of writing the code which additional arguments could be useful.
+In such a case you can simply put a placeholder in the list of arguments which is done 
+with <tt>...</tt>.<br><br>
+In our initial geometric mean example we had some difficulties with missing values.
+We could expand the arguments with the 2 dots as follows:<br><br>
+
+```{r tut=T, height=50}
+geom.mean <- function(x, ...) {
+   result <- exp(mean(log(x), ...))
+   return(result)
+}
+some_numbers <- c(NA,10,100,1000)
+geom.mean(some_numbers)
+geom.mean(some_numbers, na.rm = T)
+```
+
+
