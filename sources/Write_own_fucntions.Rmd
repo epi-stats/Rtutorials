@@ -1,26 +1,42 @@
 ---
 title: "Writing own functions in R"
 output:
-  bookdown::html_document2: 
-    number_sections: false 
-    toc: true
-    toc_float: true
-    smart: false
+  html_document: 
+      number_sections: false 
+      toc: true
+      toc_float: true
+      # toc_float: 
+      #       collapsed: false
+      #       smooth_scroll: false   
+      self_contained: false
 ---
+
+```{css toc-content, echo = FALSE}
+#TOC {
+  left: 5px;
+  # top 
+  margin: 15px 0px 0px 0px;
+}
+
+.main-container {
+    margin-left: 5px;
+    margin-right: 50px;
+  }
+```
   
   
 ```{r, include=FALSE}
+library(knitr)
 knitr::opts_chunk$set(comment = NA)
-tutorial::go_interactive(greedy=FALSE,  height = 50)
+tutorial::go_interactive()
 ```
 
 # Introduction {#intro}
 
-One strength of R is the user's ability to define own functions. 
-A function is simply some R code to perform a specific task.
-They are especially useful of you have some R code which you want to use repeatedly.
-You don't need functions, every task can also be done with plain code but functions have 
-several advantages:<br><br>
+One of the strengths of R is the ability for users to define their own functions. 
+A function is simply a piece of R code that performs a specific task. 
+They are particularly useful if you have some R code that you want to use repeatedly. 
+You don't need functions, any task can be done with plain code, but functions have several advantages::<br><br>
 Your code might be shorter and easier to interpret<br> 
 Your code is easier to maintain<br>
 It is easier to reuse functions in future R scripts<br><br> 
@@ -40,12 +56,11 @@ Finally, you specify which value (i.e. which result) should be returned if the f
 If you don't explicitly define a return value, the function will return 
 the last expression evaluated within the within curly parentheses.<br><br>
 
- Traditionally, the first program written by people learning a new programming language,
- is the famous Hello-World-Program. A program which displays the message "Hello, World!".
- This function does not require any arguments, 
- because independent from the input the output is always the same text message.
- We define a new function with the name <tt>hello</tt> and in the function body 
- we simply write some code to print "Hello, World!" in the R console.<br><br>
+Traditionally, the first program written by people learning a new programming language is the 
+famous Hello World program. A program that displays the message "Hello, World!".
+This function takes no arguments, because whatever the input, the output is always the same text message. 
+We define a new function called <tt>hello</tt> and in the function body we simply write 
+some code to print "Hello, World!".<br><br>
  
 ```{r tut=T, height=20}
 # Generate the deck
@@ -54,8 +69,9 @@ hello <- function() {
 }
 
 hello()
-
 ```
+
+
  
 <br>
 You can see several things:<br><br>
@@ -70,13 +86,13 @@ If you omit the parentheses <tt>hello</tt> R will return the code stored in the 
 
 # A simple function {#gm}
 
-R has not a function to calculate the geometric mean, so we will define one. 
-The geometric mean is the nth root of the product of n numbers.
-However, the product can be extremely large if n is getting high it is usually 
-calculated as the exponential of the arithmetic mean of logarithms which is in R language:<br>
+R does not have a function to calculate the geometric mean, so we will define one. 
+The geometric mean is the nth root of the product of n numbers. 
+However, the product can be extremely large when n becomes large, so it is usually calculated as 
+the exponential of the arithmetic mean of the logarithms, which is in the R language::<br>
 <tt>exp(mean(log(x)))</tt><br>
 where x is a numeric vector. If you don't know the term numeric vector, 
-it is simply a collection of numbers, e.g. <tt>c(2, 3.1, 0)</tt>  or <tt>5:10</tt>.<br>
+it is simply a collection of numbers, e.g. <tt>c(2, 3.1, 0)</tt>  or <tt>5:10</tt>. 
 Have a look at the code below ro see how the function is defined:<br><br>
 
 ```{r tut=T, height=50}
@@ -143,9 +159,9 @@ If you omit the argument, R will use the default value, e.g.:
 <br><br>
 
 <b>Exercise: Ancient Babylonian multiplication</b><br> 
-In ancient Babylon they had no positional numeral system (place-value notation).
-Like in ancient Rome they used symbols, each with a fixed integer value (like 1, 10, 100).
-Multiplication is not straight forward, so they used the following formula to multiply 2 numbers (x * y):<br>
+In ancient Babylon, they did not have a positional number system (place value notation). 
+Like ancient Rome, they used symbols, each with a fixed integer value (such as 1, 10, 100). 
+Multiplication is not easy, so they used the following formula to multiply 2 numbers (x * y):<br>
 <tt>((x + y)^2 - (x - y)^2) / 4</tt><br>  
 Complete the code below to define the function babylon.<br><br>
 
@@ -170,15 +186,13 @@ babylon(66, 55)
 
 # Multiple results {#res}
 
-If you would like to return more than 1 result, the best way is to return them as a list.
-If you don't know what a list is: it is a collection of items like a vector but the
-single items can be of different classes, e.g. numbers, text, data frames, etc.
-The elements are usually named and can be accessed 
-like a variable in a data frame with the $ sign.<br>
-Let us define a function which calculates the odds ratio of a 2x2 table and
-the confidence interval. The upper limit of the confidence interval can be 
-approximated with the follwiong formula:<br>
-<tt>OR + 1.96 * sqrt(1/A + 1/B + 1/C + 1/D)</tt><br><br>  
+If you want to return more than 1 result, the best way is to return it as a list. 
+If you don't know what a list is: it's a collection of elements, like a vector, but the elements 
+can be of different classes, e.g. numbers, text, data frames, etc. The elements are usually named. 
+The elements are usually named and can be accessed like a variable in a data frame with the $ sign.
+Let us define a function that calculates the odds ratio of a 2x2 table and the confidence interval. 
+The  confidence interval can be approximated using the following formula:<br>
+<tt>OR +/- 1.96 * sqrt(1/A + 1/B + 1/C + 1/D)</tt><br><br>  
 
 ```{r tut=T, height=50}
 # A = number of exposed with disease, .., D = number unexposed without disease
@@ -213,9 +227,9 @@ To check if there is at least one 0, we van use: <br>
 <tt>  # code to be executed</tt><br>
 <tt>}</tt><br><br>
 
-After <tt>if</tt>a condition is provided in round parentheses and only if the condition 
-is <tt>TRUE</tt> the code in the curly parentheses will be executed. As you see, it
-follows more or less the same logic as the parentheses for the functions.
+If an <tt>if</tt> condition is given in round brackets and the condition is <tt>TRUE</tt>, 
+then the code in the curly brackets will be executed. As you can see, 
+it follows more or less the same logic as the brackets for the functions.
 <br><br>
 
 
@@ -255,15 +269,18 @@ geom.mean(c(-1,10,100,1000))
 <br><br>
 
 <b>Exercise</b><br> 
-It is impossible to calculate Geometric Mean with negative numbers. 
+It is impossible to calculate the geometric mean with negative numbers. 
 Modify the code above that it produces an error with a warning massage 
 <tt> stop("Negative numbers")</tt> if there are any negative numbers in x.<br><br>
 
 # Anonymous functions  {#anon}
 
-Sometimes you need just a very short function and you need it only once. 
-This is for instance sometimes the case if you have your own function within the    
-<tt>by</tt> function. It is possible to define such a function directly without
+Sometimes you just need a simple function and you only need it once. For example, 
+if you need a custom function inside a <tt>by</tt> or <tt>apply</tt> function. 
+It is possible to define such a function directly without a proper definition and without a name. 
+In the following example, you want to calculate the mean and standard deviation of the variable Wind, 
+stratified by month (<tt>airquality</tt> data).
+Remember that by is used as follows: It is possible to define such a function directly without
 proper definition and without an own name.
 In the example below you would like to calculate the mean and the standard deviation of 
 the variable <tt>Wind</tt> stratified by month (data </tt>airquality</tt>).<br>
@@ -279,17 +296,15 @@ by(airquality$Wind, airquality$Month, function(x) c(mean(x), sd(x)))
 
 # Passing arguments with <tt>...</tt> {#dots}
 
-Often a function is called within another function, e.g. in our geometric mean example
-we call the built-in function <tt>mean</tt> within our own <tt>geom.mean</tt> function.
-Sometimes you wish that some arguments of your newly defined function
-should be forwarded to a function called within it. 
-If you know in advance which arguments you would like to forward, you can simply
-put them as additional arguments. However, sometimes you do not know exactly at the time 
-of writing the code which additional arguments could be useful.
-In such a case you can simply put a placeholder in the list of arguments which is done 
-with <tt>...</tt>.<br><br>
+Sometimes a function is called inside another function, e.g. in our geometric mean example 
+we call the built-in <tt>mean</tt> function inside our own geom.mean function. 
+You may want some arguments of your newly defined function to be passed to a 
+function called within it. If you know in advance which arguments you want to pass, 
+you can simply add them as additional arguments. However, sometimes you do not know exactly 
+which additional arguments might be useful at the time of writing the code. 
+In such a case, you can simply add a placeholder to the list of arguments <tt>...</tt> <br><br>
 In our initial geometric mean example we had some difficulties with missing values.
-We could expand the arguments with the 2 dots as follows:<br><br>
+We could expand the arguments with the 3 dots as follows:<br><br>
 
 ```{r tut=T, height=50}
 geom.mean <- function(x, ...) {
@@ -300,5 +315,10 @@ some_numbers <- c(NA,10,100,1000)
 geom.mean(some_numbers)
 geom.mean(some_numbers, na.rm = T)
 ```
+
+
+
+
+
 
 
