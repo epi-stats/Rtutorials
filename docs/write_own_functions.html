@@ -13,13 +13,13 @@
 
 <title>Writing own functions in R</title>
 
-<script src="writing_own_functions_v3_files/header-attrs-2.16/header-attrs.js"></script>
-<script src="writing_own_functions_v3_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="writing_own_functions_v4_files/header-attrs-2.16/header-attrs.js"></script>
+<script src="writing_own_functions_v4_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="writing_own_functions_v3_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
-<script src="writing_own_functions_v3_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
-<script src="writing_own_functions_v3_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
-<script src="writing_own_functions_v3_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="writing_own_functions_v4_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="writing_own_functions_v4_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="writing_own_functions_v4_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="writing_own_functions_v4_files/bootstrap-3.3.5/shim/respond.min.js"></script>
 <style>h1 {font-size: 34px;}
        h1.title {font-size: 38px;}
        h2 {font-size: 30px;}
@@ -29,12 +29,12 @@
        h6 {font-size: 12px;}
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
-<script src="writing_own_functions_v3_files/jqueryui-1.11.4/jquery-ui.min.js"></script>
-<link href="writing_own_functions_v3_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
-<script src="writing_own_functions_v3_files/tocify-1.9.1/jquery.tocify.js"></script>
-<script src="writing_own_functions_v3_files/navigation-1.1/tabsets.js"></script>
-<link href="writing_own_functions_v3_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
-<script src="writing_own_functions_v3_files/highlightjs-9.12.0/highlight.js"></script>
+<script src="writing_own_functions_v4_files/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="writing_own_functions_v4_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="writing_own_functions_v4_files/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="writing_own_functions_v4_files/navigation-1.1/tabsets.js"></script>
+<link href="writing_own_functions_v4_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="writing_own_functions_v4_files/highlightjs-9.12.0/highlight.js"></script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -279,9 +279,9 @@ code to be executed </tt><br> <tt> return(my_result)</tt><br>
 <tt>function()</tt>. The names of one and more arguments can be
 specified in round parentheses. Most functions require at least one
 argument but even if a function does not require any arguments
-(e.g. <tt>dir()</tt> you have to type the round parentheses. Next, the
+(e.g. <tt>dir()</tt> you have to type the round parentheses. Next, the
 body of the function – the R code to be executed – is contained within
-curly parentheses. Finally, you specify which value (i.e. which result)
+curly parentheses. Finally, you specify which value (i.e. which result)
 should be returned if the function is called with <tt>
 return(my_result)</tt>. If you don’t explicitly define a return value,
 the function will return the last expression evaluated within the within
@@ -293,7 +293,7 @@ because whatever the input, the output is always the same text message.
 We define a new function called <tt>hello</tt> and in the function body
 we simply write some code to print “Hello, World!”.<br><br></p>
 <div data-datacamp-exercise="" data-height="20" data-encoded="true">
-eyJsYW5ndWFnZSI6InIiLCJzYW1wbGUiOiIjIEdlbmVyYXRlIHRoZSBkZWNrXG5oZWxsbyA8LSBmdW5jdGlvbigpIHtcbiAgIHByaW50KFwiSGVsbG8sIFdvcmxkIVwiKVxufVxuXG5oZWxsbygpIn0=
+eyJsYW5ndWFnZSI6InIiLCJzYW1wbGUiOiJoZWxsbyA8LSBmdW5jdGlvbigpIHtcbiAgIHByaW50KFwiSGVsbG8sIFdvcmxkIVwiKVxufVxuXG5oZWxsbygpIn0=
 </div>
 <p><br> You can see several things:<br><br> Although we don’t use any
 arguments the round parentheses are provided after
@@ -315,7 +315,7 @@ large, so it is usually calculated as the exponential of the arithmetic
 mean of the logarithms, which is in the R language::<br>
 <tt>exp(mean(log(x)))</tt><br> where x is a numeric vector. If you don’t
 know the term numeric vector, it is simply a collection of numbers,
-e.g. <tt>c(2, 3.1, 0)</tt> or <tt>5:10</tt>. Have a look at the code
+e.g. <tt>c(2, 3.1, 0)</tt> or <tt>5:10</tt>. Have a look at the code
 below ro see how the function is defined:<br><br></p>
 <div data-datacamp-exercise="" data-height="50" data-encoded="true">
 eyJsYW5ndWFnZSI6InIiLCJzYW1wbGUiOiJnZW9tLm1lYW4gPC0gZnVuY3Rpb24oeCkge1xuICAgcmVzdWx0IDwtIGV4cChtZWFuKGxvZyh4KSkpXG4gICByZXR1cm4ocmVzdWx0KVxufVxuc29tZV9udW1iZXJzIDwtIGMoMSwxMCwxMDAsMTAwMClcbmdlb20ubWVhbihzb21lX251bWJlcnMpIn0=
@@ -324,11 +324,11 @@ eyJsYW5ndWFnZSI6InIiLCJzYW1wbGUiOiJnZW9tLm1lYW4gPC0gZnVuY3Rpb24oeCkge1xuICAgcmVz
 x contains the numbers to calculate the geometric mean from. You could
 also define the numbers directly in the function call:<br>
 <tt>geom.mean(c(1,10,100,1000))</tt><br> but usually you will apply the
-function to a variables in a dataset, e.g. the variable <tt>Wind</tt> in
+function to a variables in a dataset, e.g. the variable <tt>Wind</tt> in
 the dataset <tt>airquality</tt> which is included in R. Copy the line
 below in the code window above and execute the code again.<br>
 <tt>geom.mean(airquality$Wind)</tt><br> The code behaves in the same way
-as plain R code, e.g. if x contains any negative numbers R would show
+as plain R code, e.g. if x contains any negative numbers R would show
 the warning message:<br> <tt>[1] NaN</tt><br> <tt>Warning
 message:</tt><br> <tt>In log(x) : NaNs produced</tt><br> <br> Of course,
 you can assign the result to a new R object for later use in the same
@@ -373,7 +373,7 @@ eyJsYW5ndWFnZSI6InIiLCJzYW1wbGUiOiJiYWJ5bG9uIDwtIGZ1bmN0aW9uKHgsIHkpIHtcbiAgICMg
 <p>If you want to return more than 1 result, the best way is to return
 it as a list. If you don’t know what a list is: it’s a collection of
 elements, like a vector, but the elements can be of different classes,
-e.g. numbers, text, data frames, etc. The elements are usually named.
+e.g. numbers, text, data frames, etc. The elements are usually named.
 The elements are usually named and can be accessed like a variable in a
 data frame with the $ sign. Let us define a function that calculates the
 odds ratio of a 2x2 table and the confidence interval. The confidence
@@ -389,7 +389,7 @@ eyJsYW5ndWFnZSI6InIiLCJzYW1wbGUiOiIjIEEgPSBudW1iZXIgb2YgZXhwb3NlZCB3aXRoIGRpc2Vh
 <p>Let us revisit the geometric mean example. The geometric mean is
 often used for parasitic egg counts in stool samples. However, there is
 one problem: there are usually also some negative stool samples,
-i.e. stool samples with 0 eggs. If there is at least 0, the geometric
+i.e. stool samples with 0 eggs. If there is at least 0, the geometric
 mean is 0. Therefore, the formula is usually modified as:<br>
 <tt>exp(mean(log(x + 1))) - 1</tt><br> Our aim is to write a function
 which calculates the modified geometric mean if there is at lest one 0
@@ -430,7 +430,7 @@ eyJsYW5ndWFnZSI6InIiLCJzYW1wbGUiOiJieShhaXJxdWFsaXR5JFdpbmQsIGFpcnF1YWxpdHkkTW9u
 </div>
 <div id="dots" class="section level1">
 <h1>Passing arguments with <tt>…</tt></h1>
-<p>Sometimes a function is called inside another function, e.g. in our
+<p>Sometimes a function is called inside another function, e.g. in our
 geometric mean example we call the built-in <tt>mean</tt> function
 inside our own geom.mean function. You may want some arguments of your
 newly defined function to be passed to a function called within it. If
