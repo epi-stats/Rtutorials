@@ -1,0 +1,272 @@
+---
+title: " First steps in R"
+output:
+  bookdown::html_document2: 
+    number_sections: false 
+    toc: false
+    toc_float: false
+    smart: false
+---
+  
+  
+```{r, include=FALSE}
+knitr::opts_chunk$set(comment = NA)
+tutorial::go_interactive(greedy=FALSE,  height = 250)
+```
+
+# Basics of using R
+
+Note: R is case sensitive! AbC is not the same as aBc<br>
+
+Open a new R script in the script editor by<br> 
+   File > New Script (Windows)   or     File > New Document (Mac)<br>
+To run the current line or selection press: <br> 
+   [Cntr] + [Enter] (Windows)  or [Command] +[Enter] (Mac) or press the run button.<br><br>
+
+R is as a powerful calculator. In addition to the simple arithmetic functions +, -, /, *  R computes<br>
+Power:   	  x^y<br>
+Square root:	  sqrt(x)<br>
+Cubic root:	  x^(1/3)<br>   
+Logarithm:	  log(x), log10(x), log(x, base=y)<br>
+Exponentiation:	  exp(x)<br>
+Trigonometric functions …<br><br>  
+To get a first R-exposure, compute the results of the following mathematical expressions:<br>
+Note: The equality operator == evaluates if 2 values are equal, e.g. 1==1 is true and 1==2 is false.
+
+```{r ex="calc", type="sample-code", tut=T}
+# some results you expected
+2 + 3 * 4
+2^1023
+sqrt(4)
+4^0.5
+1 - 0.6 == 0.4
+# an unexpected result
+1 - 0.9 == 0.1
+
+``` 
+
+## Vectors and vector operations
+
+After you execute an expression in R, the result will be displayed immediately. However, usually you will store (assign) the result in an object to access it later on. To assign the result to an object use the '<' followed by a '-'. You can choose (almost) any name for an object (remember that R is case sensitive). If you would like to assign and display the result at the same time, enclose the expression in round brackets, e.g.  (five <- 2 + 3) 
+Try the code below. <br><br>
+
+A vector is a sequence of items of the same type (often numbers). A vector can also be created using the combine function  c, e.g. c(item1, item2, item3). All items have to be of the same type, all numeric or all text.
+To generate sequences you have several options. The expression 1:10 is synonym for the integer numbers from 1 to 10. An alternative way is to use the function  rep(number, times) for instance  rep(3, 4) would create the vector 3, 3, 3, 3. The function seq generates a logical sequence either by seq(start, end, increment). <br><br>
+ 
+Try the following code:
+
+```{r ex="seq", type="sample-code", tut=T}
+a <- 2 
+(b <- a + a)
+x <- 1:5
+x
+z <- seq(1, 2, 0.01)
+z
+``` 
+
+Vectors in R are indexed starting with 1. To access a particular element of the vector, you must specify the index number enclosed in square brackets. It is also possible to specify negative numbers. The interpretation of R is "all elements except". You can also change the value of a specific element via the index.
+You can also assign a new value to a certain item of a vector.
+
+```{r ex="index", type="sample-code", tut=T}
+x <- 1:5
+x[2:4]
+x[-2]
+
+
+x[3] <- 0
+x
+``` 
+
+Some basic functions include displaying the length of a vector, the minimum/maximum and the summary statistics.
+Note: With the arrow keys up and down you can browse through the recent commands (like page up and page down in Stata).<br><br>
+
+<tt>length(x)</tt><br>
+<tt>summary(x)</tt><br><br>
+
+Missing values are presented as NA (not available). By default many functions return the result NA if the data contain missing values (e.g. min, max, mean, median). These functions have an additional argument na.rm (remove NA) if this argument is set to T or TRUE (uppercase!) the statistics will be performed ignoring the missing values.
+
+```{r ex="func", type="sample-code", tut=T}
+x <- 1:5
+x[1] <- NA
+x
+mean(x)
+mean(x, na.rm = TRUE)
+``` 
+
+You have in R the common inequality statements like >, <, >=, <= and is equal == (not to be confused with a single = which can be used as an assignment operator). Not equal is written as !=
+These operators can be applied to vectors, too.<br> 
+Usually, you don't want to access an item of a vector based on its position but on certain characteristics, e.g. you would like to get the values if a certain condition is true. Simply write a condition – e.g. greater than 4 – in the square brackets. R returns all items which satisfy this condition. It has some advantages to enclose the condition in the 'which'-function as shown below:<br>
+
+```{r ex="which", type="sample-code", tut=T}
+x <- 1:5
+x > 4
+which(x > 4)
+x[which(x > 4)]
+```
+
+## Exercise
+
+Write some R code to:<br>
+- Generate a vector 'year' with the numbers 1900, 1905, … , 1940, (e.g. with function seq):<br>
+- Set the 2nd element (i.e. 1905) to 1950<br>
+- Calculate the mean value of 'year'<br> 
+- Set the 3rd element (i.e. 1910) to NA (missing)<br>
+- Calculate again the mean value of 'year'<br> 
+- Generate a vector 'rootyr' with the square roots of the vector 'year'<br> 
+
+```{r ex="basic", tut=T, type="sample-code"}
+# generate avector 'year' 1900, 1905, 1940  
+year <- seq(1900,  ...
+# Set the 2nd element  to 1950
+year[ ...
+#Calculate the mean value of 'year' 
+
+# Set the 3rd element (i.e. 1910) to NA (missing)
+
+# Calculate again the mean value of 'year'
+
+# Generate a vector 'rootyr' with the square roots of the vector 'year' 
+              
+
+```
+
+```{r ex="basic", tut=T, type="solution"}
+# generate avector 'year' 1900, 1905, 1940  
+year <- seq(1900,  1940, 5)
+# Set the 2nd element  to 1950
+year[2] <- 1950
+#Calculate the mean value of 'year' 
+mean(year)
+# Set the 3rd element (i.e. 1910) to NA (missing)
+year[3] <- NA
+# Calculate again the mean value of 'year'
+mean(year, na.rm = T)
+# Generate a vector 'rootyr' with the square roots of the vector 'year'
+rootyr <- sqrt(year)
+rootyr
+
+```
+
+# Data analysis using example dataset "airquality"
+
+The dataset used in this exercise is the built-in R data set "airquality". The dataset has 6 variables on daily air quality measurements in New York in 1973.<br>
+To see a description of the dataset type:   ?airquality <br>
+
+To load a built-in dataset you would usually use the function data(dataname) because we will manipulate this dataset we will first make a copy of the dataset df <- airquality<br>
+
+
+## Step 1: initial inspection of the data set
+First we would like to get an overview. We are interested which variables are in this dataset, the type of the variables (numeric, text, …), occurrence of missing data and if the values of the variables are within the expected range. Useful functions include str, head and summary.<br>
+The first line of the output shows that we have 153 records and 6 variables. Further we see the name of the variables and their type. Type "int" indicates that we have variables of type integer (whole numbers), the variable Wind is of type "num" (numerical), i.e. numbers with decimal places. In addition the first values of each variable are displayed.
+To display the first 6 record use the function head(dataname)<br>
+It appears that the dataset is sorted by day of measurement.
+With summary you see the summary statistics for all variables
+
+```{r ex="desc", type="sample-code", tut=T}
+df <- airquality
+str(df)
+head(df)
+summary(df)
+```
+
+
+We have 37 missing values in the variable 'Ozone'. The minimum is 1 and the maximum is 168, i.e. all values are in the expected range. The temperature is obviously measured in Fahrenheit. The values for Month (the data are from May to September 1973) and for Day are reasonable.<br>
+Let's have a deeper look at our outcome variable 'Ozone'. There are 3 ways to access individual variables from a data set:<br>
+- via subscripting, e.g.		df[, 1]     for the first variable<br> 
+- via the variable name		df$Ozone or df[, "Ozone"]<br>
+Now, let us calculate some summary measures for 'Ozone'. The functions  min, max, mean, median, quantile, etc are available.<br>
+The result is NA. By default R returns missing if one of the values is missing. If we would like to apply the function only to non-missing values we need to specify the argument na.rm=TRUE    (for: NA remove). Now R is calculating the mean ignoring the missing values.
+
+```{r ex="mean", type="sample-code", tut=T}
+df <- airquality
+mean(df$Ozone)  		
+mean(df$Ozone, na.rm = T)  
+```
+
+If you don't have many unique values, a table provides a good overview table(my_var). In contrast to mean, R is excluding missing values before generating the table. If you would like to include missing as an own category add useNA="ifany" or useNA="always".<br> 
+To detect outlier, a histogram is often useful, e.g.: hist(df$Ozone).<br>
+It would be worth to have a closer look at the records which have very high Ozone values, e.g. above 120. You can use the function which to identify the related records.<br>
+
+```{r ex="tab", type="sample-code", tut=T}
+table(df$Month, useNA="ifany")
+hist(df$Ozone)
+which(df$Ozone > 120)
+```
+
+
+## Step 2: Data management
+
+Often you would like to generate new variables or to recode values. In our case we would like to express the temperature in Celsius. The formula is<br>
+Celsius = (Fahrenheit - 32) * 5 / 9<br>
+To generate a new variable in an existing dataset just assign values to dataset$newvar.<br> 
+You can split the ozone measurements into categories <50ppb, 50-99, 100+
+
+```{r ex="cut", type="sample-code", tut=T}
+df <- airquality
+df$Celsius <- (df$Temp - 32) * 5 / 9
+df$o_level <- cut(df$Ozone, breaks = c(0,49,99,200))
+table(df$o_level)
+```
+
+
+## Step 3: Descriptive statistics
+
+Several functions providing descriptive statistics have been already introduced in step 1, e.g. table or summary. However, sometimes you would like to have stratified results<br>. 
+The function    by(variable, index, function)  is helpful in this context.
+Assume that we would like to know the range of ozone stratified by month:
+
+```{r ex="by", type="sample-code", tut=T}
+df <- airquality
+by(df$Ozone, df$Month, summary)
+```
+
+
+## Step 4: Inferential statistics
+To run a linear regression R provides the function lm (linear model). The two important arguments are the regression formula outcome ~ predictor and the data set that will be used. In contrast to other statistical software (like Stata), the result of a regression model should be assigned to a new object. That has the advantage that a couple of new functions are available to summarize and display the results.<br>
+The results are stored in a list. This has some advantages since individual elements of the results can be accessed, e.g. mod1$coefficients or mod1$residuals<br>
+R provides some useful functions to summarize the regression model and to check their underlying assumptions. The summary function provides estimates, errors, P-values, degrees of freedom, … confint the 95% confidence interval. Diagnostic plots to check the model assumptions can be plotted with plot<br>
+To run a multiple linear regression, combine several predictors with + in the formula<br>
+
+```{r ex="lm", type="sample-code", tut=T}
+df <- airquality
+mod1 <- lm(Ozone ~ Temp, data = df)
+summary(mod1)
+confint(mod1)
+plot(mod1)
+mod2 <- lm(Ozone ~ Celsius + Wind, data = df)
+```
+
+## Exercise
+Write some R code to<br>
+ - calculate the median temperature<br>
+ - calculate the median temperature for each month<br>
+ - calculate the median solar radiation<br>
+ - run a linear regression with temperature as outcome and solar radiation as predictor<br>
+
+
+```{r ex="stats", tut=T, type="sample-code"}
+df <- airquality
+#calculate the median temperature<br>  
+median(... 
+# calculate the median temperature for each month
+by(...
+# calculate the median solar radiation
+
+# run a linear regression with temperature as outcome and solar radiation as predictor
+mod1 <- lm(...                  
+summary(mod1)
+```
+
+```{r ex="stats", tut=T, type="solution"}
+df <- airquality
+#calculate the median temperature<br>  
+median(df$Temp)
+# calculate the median temperature for each month
+by(df$Temp, df$Month, median)
+# calculate the median solar radiation
+median(df$Solar.R, na.rm=T)
+# run a linear regression with temperature as outcome and solar radiation as predictor
+mod1 <- lm(Temp ~ Solar.R, data=df)                  
+summary(mod1)
+
+```
