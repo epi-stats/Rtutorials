@@ -18,10 +18,6 @@ tutorial::go_interactive(greedy=FALSE,  height = 250)
 
 Note: R is case sensitive! AbC is not the same as aBc<br>
 
-Open a new R script in the script editor by<br> 
-   File > New Script (Windows)   or     File > New Document (Mac)<br>
-To run the current line or selection press: <br> 
-   [Cntr] + [Enter] (Windows)  or [Command] +[Enter] (Mac) or press the run button.<br><br>
 
 R is as a powerful calculator. In addition to the simple arithmetic functions +, -, /, *  R computes<br>
 Power:   	  x^y<br>
@@ -146,6 +142,9 @@ rootyr <- sqrt(year)
 rootyr
 
 ```
+
+---
+
 
 # Data analysis using example dataset "airquality"
 
